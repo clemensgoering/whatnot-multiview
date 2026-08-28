@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+  <title>Whatnot MultiView</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="toolbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span>Whatnot <strong>MultiView</strong></span>
+    </div>
+
+    <form id="add-form" class="add-form" autocomplete="off">
+      <input id="add-input" type="text" spellcheck="false"
+             placeholder="Whatnot-Link oder Username eingeben und Enter druecken" />
+      <button type="submit" class="btn primary">Hinzufuegen</button>
+    </form>
+
+    <div class="spacer"></div>
+
+    <div class="group" title="Spaltenanzahl im Raster">
+      <span class="label">Raster</span>
+      <div class="segmented" id="layout-group">
+        <button data-cols="auto" class="active">Auto</button>
+        <button data-cols="1">1</button>
+        <button data-cols="2">2</button>
+        <button data-cols="3">3</button>
+        <button data-cols="4">4</button>
+      </div>
+    </div>
+
+    <div class="group master" title="Master-Lautstaerke - skaliert alle Kacheln">
+      <button id="master-mute" class="btn icon" title="Alles stummschalten (M)">🔊</button>
+      <input id="master-volume" class="slider" type="range" min="0" max="100" value="70" />
+      <span id="master-volume-value" class="value">70</span>
+    </div>
+
+    <button id="open-login" class="btn" title="Whatnot-Login als Kachel oeffnen">Login</button>
+    <button id="theme-toggle" class="btn icon" title="Hell / Dunkel umschalten">🌙</button>
+  </header>
+
+  <main id="grid" class="grid" data-cols="auto"></main>
+
+  <section id="empty-state" class="empty">
+    <h1>Noch keine Streams</h1>
+    <p>
+      Fuege oben einen Whatnot-Link ein (z.&nbsp;B. <code>whatnot.com/live/…</code>)
+      oder einfach den Usernamen eines Sellers.
+    </p>
+    <div class="empty-actions">
+      <button id="open-login-empty" class="btn primary">Einloggen</button>
+      <button id="open-whatnot" class="btn">Whatnot oeffnen</button>
+    </div>
+    <p class="hint">
+      Jede Kachel ist ein vollwertiger Browser: einloggen, Stream suchen, anklicken.
+      Der Login gilt fuer alle Kacheln gemeinsam und bleibt gespeichert.<br />
+      Beim Login mit <strong>E-Mail und Passwort</strong> bleiben - Google blockiert
+      seine Anmeldung grundsaetzlich in eingebetteten Browsern.
+    </p>
+  </section>
+
+  <footer class="statusbar">
+    <span><kbd>1</kbd>–<kbd>9</kbd> Ton solo auf Kachel</span>
+    <span><kbd>0</kbd> Solo aufheben</span>
+    <span><kbd>M</kbd> alles stumm</span>
+    <span><kbd>F11</kbd> Vollbild</span>
+    <span class="spacer"></span>
+    <span id="status-count">0 Streams</span>
+  </footer>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+/* ---------- Farb-Tokens: dunkel ist der Normalfall, hell die Ausnahme ---------- */
+:root,
+:root[data-theme="dark"] {
+  --bg: #0d0f13;
+  --bg-panel: #14181f;
+  --bg-tile: #171c24;
+  --bg-input: #0b0e13;
+  --border: #262d38;
+  --border-strong: #36404f;
+  --text: #e7ecf3;
+  --text-dim: #8f9bad;
+  --accent: #ffb020;
+  --accent-text: #1a1206;
+  --live: #ff4d5e;
+  --solo: #34d399;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="light"] {
+  --bg: #f2f4f8;
+  --bg-panel: #ffffff;
+  --bg-tile: #ffffff;
+  --bg-input: #f7f9fc;
+  --border: #dde3ec;
+  --border-strong: #c3ccda;
+  --text: #131820;
+  --text-dim: #5d6a7c;
+  --accent: #e08c00;
+  --accent-text: #ffffff;
+  --live: #d92038;
+  --solo: #0f9e6e;
+  --shadow: 0 6px 18px rgba(20, 30, 50, 0.12);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 "Segoe UI", system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+body {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.spacer { flex: 1; }
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.brand strong { color: var(--accent); }
+.brand .dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--live);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--live) 22%, transparent);
+}
+
+.add-form { display: flex; gap: 6px; }
+
+#add-input {
+  width: 340px;
+  padding: 7px 11px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  user-select: text;
+}
+#add-input:focus { border-color: var(--accent); }
+#add-input::placeholder { color: var(--text-dim); }
+
+.group { display: flex; align-items: center; gap: 8px; }
+.label { color: var(--text-dim); font-size: 12px; }
+
+.btn {
+  padding: 7px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-tile);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.btn:hover { border-color: var(--border-strong); background: var(--bg-input); }
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.icon { padding: 6px 9px; font-size: 15px; line-height: 1; }
+
+.segmented { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+.segmented button {
+  padding: 6px 11px;
+  border: 0;
+  background: var(--bg-tile);
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+}
+.segmented button + button { border-left: 1px solid var(--border); }
+.segmented button:hover { color: var(--text); }
+.segmented button.active { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+
+.master { min-width: 190px; }
+.master .value { width: 26px; text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+/* ---------- Slider ---------- */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  flex: 1;
+  min-width: 70px;
+  border-radius: 3px;
+  background: var(--border-strong);
+  outline: none;
+  cursor: pointer;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-panel);
+  cursor: pointer;
+}
+.slider:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- Raster ---------- */
+.grid {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  overflow: auto;
+  align-content: stretch;
+}
+.grid:empty { display: none; }
+
+/* Fokusmodus: eine Kachel fuellt das Fenster, der Rest laeuft unsichtbar weiter. */
+.grid.focused { grid-template-columns: 1fr !important; }
+.grid.focused .tile { display: none; }
+.grid.focused .tile.is-focused { display: flex; }
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-tile);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.tile.is-solo { border-color: var(--solo); }
+.tile.is-muted .tile-title { color: var(--text-dim); }
+
+.tile-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 5px 10px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.tile-title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.tile-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.tile-btn:hover { background: var(--bg-input); color: var(--text); }
+.tile-btn.on { color: var(--solo); background: color-mix(in srgb, var(--solo) 16%, transparent); }
+.tile-btn.danger:hover { color: var(--live); }
+
+.tile-audio {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 132px;
+  flex: none;
+}
+.tile-audio .value {
+  width: 24px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile-body { position: relative; flex: 1; background: #000; }
+.tile-body webview { width: 100%; height: 100%; display: flex; border: 0; }
+
+.tile-error {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--bg-tile);
+  color: var(--text-dim);
+  text-align: center;
+  padding: 16px;
+}
+.tile.has-error .tile-error { display: flex; }
+
+/* Beim Ziehen: Ablageziel markieren. */
+.tile.drag-over { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.tile.dragging { opacity: 0.4; }
+
+/* ---------- Leerzustand ---------- */
+.empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  color: var(--text-dim);
+}
+body.is-empty .empty { display: flex; }
+.empty h1 { margin: 0; font-size: 20px; color: var(--text); }
+.empty p { margin: 0; max-width: 460px; }
+.empty code { background: var(--bg-panel); padding: 2px 6px; border-radius: 4px; color: var(--accent); }
+.empty-actions { display: flex; gap: 8px; margin-top: 6px; }
+.empty .hint { font-size: 12px; opacity: 0.75; }
+
+/* ---------- Statusleiste ---------- */
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 5px 12px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11px;
+}
+kbd {
+  background: var(--bg-tile);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 4px;
+  font: inherit;
+  font-size: 10px;
+}

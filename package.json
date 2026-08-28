@@ -1,0 +1,33 @@
+{
+  "name": "whatnot-multiview",
+  "version": "1.0.0",
+  "description": "Watch several Whatnot livestreams side by side, with a dark UI and per-stream volume control",
+  "main": "main.js",
+  "scripts": {
+    "start": "node launch.js",
+    "reset-session": "node reset-session.js"
+  },
+  "author": "clemensgoering",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clemensgoering/whatnot-multiview.git"
+  },
+  "homepage": "https://github.com/clemensgoering/whatnot-multiview#readme",
+  "bugs": {
+    "url": "https://github.com/clemensgoering/whatnot-multiview/issues"
+  },
+  "keywords": [
+    "electron",
+    "whatnot",
+    "livestream",
+    "multiview",
+    "desktop-app"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

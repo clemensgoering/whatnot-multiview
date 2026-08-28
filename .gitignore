@@ -1,0 +1,28 @@
+# Abhaengigkeiten
+node_modules/
+
+# Build-Ausgaben
+dist/
+out/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Laufzeit- und Sessiondaten (enthalten Login-Cookies - niemals commiten)
+Partitions/
+*.sqlite
+*.sqlite-journal
+
+# Editor / Betriebssystem
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Lokale Umgebung
+.env
+.env.*

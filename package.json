@@ -7,10 +7,10 @@
     "start": "node launch.js",
     "reset-session": "node reset-session.js",
     "assets": "node tools/run.js tools/make-assets.js",
-    "dist": "electron-builder",
-    "dist:win": "electron-builder --win",
-    "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux"
+    "dist": "electron-builder --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:linux": "electron-builder --linux --publish never"
   },
   "author": "clemensgoering",
   "license": "MIT",
@@ -85,7 +85,8 @@
       ],
       "icon": "build/icon.png",
       "category": "public.app-category.entertainment",
-      "artifactName": "WhatnotMultiView-${version}-${arch}.${ext}"
+      "artifactName": "WhatnotMultiView-${version}-${arch}.${ext}",
+      "identity": null
     },
     "linux": {
       "target": [

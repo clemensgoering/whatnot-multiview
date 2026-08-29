@@ -18,7 +18,7 @@ From left to right:
 | Control | What it does |
 | --- | --- |
 | ‹ | Back, within this tile's history |
-| ⌂ | Whatnot home page — see [Navigation](getting-started.md#navigating-inside-a-tile) |
+| ⌂ | Whatnot home page **in a new tile** — see [Navigation](getting-started.md#navigating-inside-a-tile) |
 | 🔊 / 🔇 | Mute or unmute this tile |
 | Slider | This tile's own volume, 0–100 (85 in the shot above) |
 | ★ | Save the page this tile is showing to [favourites](getting-started.md#favourites) |
@@ -38,10 +38,16 @@ get them back.
 💬 collapses the chat column so the video gets the whole tile. Press it again to
 bring the chat back, and the choice is remembered per tile across restarts.
 
-There is no official way to do this, so the app finds the chat by **geometry**
-rather than by class name: the outermost tall, narrow element sitting to the
-right of the video. Whatnot renames its CSS classes without notice; the shape of
-the page changes far less often.
+There is no official way to do this, so the app does not rely on class names —
+Whatnot renames those without notice. It looks for the shape of the page instead,
+with two strategies depending on how wide the tile is:
+
+- **Wide tiles** get Whatnot's desktop layout, where the chat is a tall, narrow
+  column to the right of the video. That column is found by geometry.
+- **Narrow tiles** get the mobile layout, where the chat stacks below or over the
+  video and there is no column at all. Here the app looks for the chat's message
+  field and walks up to the block containing it, stopping before it would swallow
+  the whole page.
 
 If it cannot find a column, the button flashes red and nothing is hidden — see
 [Troubleshooting](troubleshooting.md#the-chat-toggle-does-nothing).

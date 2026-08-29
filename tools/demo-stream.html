@@ -52,6 +52,16 @@
     background: #0d1016; padding: 10px; display: flex; flex-direction: column; gap: 9px;
   }
   .chat h4 { margin: 0 0 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; }
+  .chat .composer { margin-top: auto; }
+  .chat .composer input {
+    width: 100%; box-sizing: border-box; padding: 7px 9px; border-radius: 7px;
+    border: 1px solid #232a35; background: #060809; color: #e7ecf3; font: inherit;
+  }
+
+  /* Mobile layout: the chat stacks below the video instead of beside it. */
+  body.mobile { flex-direction: column; }
+  body.mobile .chat { width: auto; border-left: 0; border-top: 1px solid #1b212b; height: 45%; }
+  body.mobile .stage { flex: 1; min-height: 0; }
   .msg { font-size: 12px; }
   .msg b { color: var(--a); }
   .msg span { opacity: 0.85; }
@@ -82,9 +92,10 @@
     <div class="msg"><b>ren</b> <span>ship to EU? 🙌</span></div>
     <div class="msg"><b>toby</b> <span>gorgeous condition</span></div>
     <div class="msg"><b>sam</b> <span>bid placed</span></div>
+    <div class="composer"><input type="text" placeholder="Say something" aria-label="Chat message" /></div>
   </aside>
 <script>
-  // Farben und Texte kommen aus der Query, damit jede Kachel anders aussieht.
+  // Colours and labels come from the query string so every tile looks different.
   const q = new URLSearchParams(location.search);
   const a = q.get('a') || '#6d8bff';
   const b = q.get('b') || '#2b2f6d';
@@ -95,6 +106,7 @@
   document.getElementById('viewers').textContent = (q.get('v') || '312') + ' watching';
   document.getElementById('seller').textContent = q.get('seller') || 'demo seller';
   document.title = q.get('seller') || 'Demo stream';
+  if (q.get('layout') === 'mobile') document.body.classList.add('mobile');
 </script>
 </body>
 </html>

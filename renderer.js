@@ -45,7 +45,10 @@ const CHAT_HOOK = [
   '(() => {',
   '  if (window.__mvChat) return true;',
   '  const st = { hidden: false, el: null, prev: "" };',
-  '  function findColumn() {',
+  '  const CHATTY = /chat|message|nachricht|say something|kommentar|comment/i;',
+  '  function depth(el) { let d = 0, n = el; while (n.parentElement) { d += 1; n = n.parentElement; } return d; }',
+  '  // Desktop layout: a tall, narrow column to the right of the video.',
+  '  function byGeometry() {',
   '    const v = document.querySelector("video");',
   '    const vr = v ? v.getBoundingClientRect() : null;',
   '    const minLeft = vr && vr.width > 100 ? vr.right - 40 : innerWidth * 0.5;',
@@ -56,11 +59,39 @@ const CHAT_HOOK = [
   '      if (b.height < innerHeight * 0.4) return;',
   '      if (b.left < minLeft) return;',
   '      if (b.right < innerWidth * 0.75) return;',
-  '      let d = 0, n = el;',
-  '      while (n.parentElement) { d += 1; n = n.parentElement; }',
+  '      const d = depth(el);',
   '      if (d < bestDepth) { bestDepth = d; best = el; }',
   '    });',
   '    return best;',
+  '  }',
+  '  // Mobile layout: the chat stacks below or over the video, so there is no',
+  '  // column to find. Locate its message field instead and walk up to the block',
+  '  // that holds it, stopping before we would swallow the whole page.',
+  '  function byComposer() {',
+  '    const fields = Array.prototype.slice.call(',
+  '      document.querySelectorAll("input, textarea, [contenteditable]"));',
+  '    const field = fields.find((f) => {',
+  '      if (f.type === "hidden" || f.type === "password") return false;',
+  '      const label = (f.getAttribute("placeholder") || "") + " " +',
+  '        (f.getAttribute("aria-label") || "") + " " + (f.name || "");',
+  '      return CHATTY.test(label);',
+  '    });',
+  '    if (!field) return null;',
+  '    const area = innerWidth * innerHeight;',
+  '    let node = field;',
+  '    while (node && node !== document.body) {',
+  '      const b = node.getBoundingClientRect();',
+  '      const frac = (b.width * b.height) / area;',
+  '      if (frac > 0.1 && frac < 0.8) return node;',
+  '      node = node.parentElement;',
+  '    }',
+  '    return null;',
+  '  }',
+  '  // Narrow tiles get Whatnot\'s mobile layout, wide ones the desktop one.',
+  '  function findColumn() {',
+  '    return innerWidth >= 700',
+  '      ? (byGeometry() || byComposer())',
+  '      : (byComposer() || byGeometry());',
   '  }',
   '  window.__mvChat = {',
   '    set(hide) {',
@@ -368,7 +399,7 @@ function buildTile(stream) {
   const homeBtn = document.createElement('button');
   homeBtn.className = 'tile-btn';
   homeBtn.textContent = '⌂';
-  homeBtn.title = 'Whatnot home page';
+  homeBtn.title = 'Open the Whatnot home page in a new tile';
 
   nav.append(backBtn, homeBtn);
 
@@ -511,7 +542,9 @@ function buildTile(stream) {
     if (webview.canGoBack()) webview.goBack();
   });
 
-  homeBtn.addEventListener('click', () => webview.loadURL(WHATNOT_HOME));
+  // Opens a new tile rather than navigating this one: you look for the next
+  // stream without losing the one you are watching.
+  homeBtn.addEventListener('click', () => addStream(WHATNOT_HOME));
 
   favBtn.addEventListener('click', () => toggleFavourite(entry));
 

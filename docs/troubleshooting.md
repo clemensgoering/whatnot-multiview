@@ -64,12 +64,15 @@ and bandwidth become the limit on most machines.
 
 ## The chat toggle does nothing
 
-The 💬 button flashes red when it cannot find a chat column. It identifies the
-chat by geometry — the outermost tall, narrow element to the right of the video —
-so it only works on a page that actually has that shape.
+The 💬 button flashes red when it finds nothing to hide. It identifies the chat by
+the shape of the page rather than by class name, using one strategy for the
+desktop layout (a column right of the video) and another for the mobile layout a
+narrow tile gets (the block around the chat's message field).
 
 - On a listing or profile page there is no chat to hide. Open a stream first.
 - Give the stream a moment to finish loading, then try again.
+- If it works in [focus mode](layout.md#focus-mode) but not in a small tile, the
+  mobile strategy has missed — please report it with the tile width.
 - If the page has a chat but the button never finds it, Whatnot has probably
   changed its layout; please
   [open an issue](https://github.com/clemensgoering/whatnot-multiview/issues).

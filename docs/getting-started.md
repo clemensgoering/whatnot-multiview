@@ -53,12 +53,12 @@ have left the page that listed the others.
 | Control | What it does |
 | --- | --- |
 | ‹ | Back, one step in this tile's history |
-| ⌂ | Jump to the Whatnot home page in this tile |
+| ⌂ | Open the Whatnot home page in a **new** tile |
 | <kbd>Alt</kbd>+<kbd>←</kbd> | Back in the tile that is currently in [focus mode](layout.md#focus-mode) |
 
-A good working pattern: keep one tile parked on the home page as your browser,
-and use ⌂ on it whenever you want to look for something new. The other tiles stay
-on their streams.
+⌂ deliberately opens a *new* tile rather than navigating the current one — you go
+looking for the next stream without losing the one you are watching. Close the
+browsing tile again with ✕ once you have found something.
 
 ## Favourites
 

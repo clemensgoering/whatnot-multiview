@@ -60,6 +60,9 @@ Electron start as plain Node and the window never appears.
 | **Focus mode** | One tile fills the window while the others keep playing unseen |
 | **Flexible grid** | Auto-square layout or a forced 1–4 columns, drag to reorder |
 | **Dark by default** | Light theme one click away, both as CSS custom properties |
+| **Chat toggle** | Collapse the chat column per tile to give the video the room |
+| **Favourites** | Save any page a tile is showing and reopen it in one click |
+| **Real navigation** | Back and home buttons per tile, so a tile is never a dead end |
 | **One login** | All tiles share a session; it survives restarts |
 
 Everything — stream list, volumes, layout, theme — is remembered between sessions.

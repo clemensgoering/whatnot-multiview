@@ -17,13 +17,34 @@ From left to right:
 
 | Control | What it does |
 | --- | --- |
+| ‹ | Back, within this tile's history |
+| ⌂ | Whatnot home page — see [Navigation](getting-started.md#navigating-inside-a-tile) |
 | 🔊 / 🔇 | Mute or unmute this tile |
 | Slider | This tile's own volume, 0–100 (85 in the shot above) |
+| ★ | Save the page this tile is showing to [favourites](getting-started.md#favourites) |
+| 💬 | Show or hide the chat column |
 | `S` | **Solo** — hear only this stream |
 | ⛶ | Enlarge the tile, see [Layout](layout.md#focus-mode) |
 | ⟳ | Reload the stream |
 | ↗ | Open this stream in your system browser |
 | ✕ | Remove the tile |
+
+On narrow tiles — four columns on a small screen — the numeric volume and then
+⟳ and ↗ drop out to keep the row usable. Widen the tile or use fewer columns to
+get them back.
+
+## Hiding the chat
+
+💬 collapses the chat column so the video gets the whole tile. Press it again to
+bring the chat back, and the choice is remembered per tile across restarts.
+
+There is no official way to do this, so the app finds the chat by **geometry**
+rather than by class name: the outermost tall, narrow element sitting to the
+right of the video. Whatnot renames its CSS classes without notice; the shape of
+the page changes far less often.
+
+If it cannot find a column, the button flashes red and nothing is hidden — see
+[Troubleshooting](troubleshooting.md#the-chat-toggle-does-nothing).
 
 ## Solo
 

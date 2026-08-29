@@ -62,6 +62,21 @@ and bandwidth become the limit on most machines.
   need one picture — hidden tiles still decode, but the compositing cost drops.
 - Lower the stream quality inside the tile if Whatnot offers the option.
 
+## The chat toggle does nothing
+
+The 💬 button flashes red when it cannot find a chat column. It identifies the
+chat by geometry — the outermost tall, narrow element to the right of the video —
+so it only works on a page that actually has that shape.
+
+- On a listing or profile page there is no chat to hide. Open a stream first.
+- Give the stream a moment to finish loading, then try again.
+- If the page has a chat but the button never finds it, Whatnot has probably
+  changed its layout; please
+  [open an issue](https://github.com/clemensgoering/whatnot-multiview/issues).
+
+If it hides the wrong element, press it again to restore, then reload the tile
+with ⟳.
+
 ## The volume slider does not change anything
 
 Muting works at the webview level and is reliable. The slider works by setting

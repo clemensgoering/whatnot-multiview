@@ -32,6 +32,60 @@ const AUDIO_HOOK = [
   '})();',
 ].join('\n');
 
+const FAVOURITES_KEY = 'whatnot-multiview.favourites.v1';
+
+/*
+ * Hides the chat column inside the stream page.
+ *
+ * Deliberately a runtime heuristic rather than a hard-coded selector: it looks
+ * for the outermost tall, narrow element sitting to the right of the video.
+ * Whatnot's class names change without notice, the page geometry does not.
+ */
+const CHAT_HOOK = [
+  '(() => {',
+  '  if (window.__mvChat) return true;',
+  '  const st = { hidden: false, el: null, prev: "" };',
+  '  function findColumn() {',
+  '    const v = document.querySelector("video");',
+  '    const vr = v ? v.getBoundingClientRect() : null;',
+  '    const minLeft = vr && vr.width > 100 ? vr.right - 40 : innerWidth * 0.5;',
+  '    let best = null, bestDepth = 1e9;',
+  '    document.querySelectorAll("div, section, aside").forEach((el) => {',
+  '      const b = el.getBoundingClientRect();',
+  '      if (b.width < 150 || b.width > innerWidth * 0.45) return;',
+  '      if (b.height < innerHeight * 0.4) return;',
+  '      if (b.left < minLeft) return;',
+  '      if (b.right < innerWidth * 0.75) return;',
+  '      let d = 0, n = el;',
+  '      while (n.parentElement) { d += 1; n = n.parentElement; }',
+  '      if (d < bestDepth) { bestDepth = d; best = el; }',
+  '    });',
+  '    return best;',
+  '  }',
+  '  window.__mvChat = {',
+  '    set(hide) {',
+  '      if (hide) {',
+  '        if (st.hidden) return true;',
+  '        const el = findColumn();',
+  '        if (!el) return false;',
+  '        st.el = el; st.prev = el.style.display;',
+  '        el.style.display = "none";',
+  '        st.hidden = true;',
+  '      } else {',
+  '        if (st.el) { st.el.style.display = st.prev; }',
+  '        st.el = null; st.hidden = false;',
+  '      }',
+  '      window.dispatchEvent(new Event("resize"));',
+  '      return st.hidden;',
+  '    },',
+  '  };',
+  '  return true;',
+  '})();',
+].join('\n');
+
+/** Finds a link to a running stream, used to jump from a profile to its live show. */
+const FIND_LIVE = '(() => { const a = document.querySelector(\'a[href*="/live/"]\'); return a ? a.href : ""; })()';
+
 const state = {
   streams: [],
   masterVolume: 70,
@@ -40,6 +94,7 @@ const state = {
   focusId: null,
   cols: 'auto',
   theme: 'dark',
+  favourites: [],
 };
 
 /** id -> { stream, el, webview, ready, ... } */
@@ -59,6 +114,8 @@ const dom = {
   openLogin: document.getElementById('open-login'),
   openLoginEmpty: document.getElementById('open-login-empty'),
   signOut: document.getElementById('sign-out'),
+  favToggle: document.getElementById('fav-toggle'),
+  favPanel: document.getElementById('fav-panel'),
 };
 
 /* ------------------------------------------------------------------ */
@@ -69,6 +126,7 @@ function save() {
   const payload = {
     streams: state.streams.map((s) => ({
       id: s.id, url: s.url, title: s.title, volume: s.volume, muted: s.muted,
+      chatHidden: s.chatHidden,
     })),
     masterVolume: state.masterVolume,
     masterMuted: state.masterMuted,
@@ -79,6 +137,29 @@ function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (e) {
     console.warn('Could not save state', e);
+  }
+}
+
+function saveFavourites() {
+  try {
+    localStorage.setItem(FAVOURITES_KEY, JSON.stringify(state.favourites));
+  } catch (e) {
+    console.warn('Could not save favourites', e);
+  }
+}
+
+function loadFavourites() {
+  try {
+    const raw = localStorage.getItem(FAVOURITES_KEY);
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (Array.isArray(list)) {
+      state.favourites = list
+        .filter((f) => f && typeof f.url === 'string')
+        .map((f) => ({ url: f.url, title: String(f.title || f.url).slice(0, 80) }));
+    }
+  } catch (e) {
+    console.warn('Favourites unreadable', e);
   }
 }
 
@@ -101,6 +182,7 @@ function load() {
           title: s.title || hostLabel(s.url),
           volume: clamp(Number(s.volume), 0, 100, 100),
           muted: Boolean(s.muted),
+          chatHidden: Boolean(s.chatHidden),
         }));
     }
     state.masterVolume = clamp(Number(data.masterVolume), 0, 100, 70);
@@ -187,6 +269,80 @@ function applyAllAudio() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Chat and favourites                                                 */
+/* ------------------------------------------------------------------ */
+
+/** Returns whether the chat is hidden afterwards; false means nothing was found. */
+async function setChatHidden(entry, hide) {
+  if (!entry || !entry.ready) return false;
+  try {
+    const result = await entry.webview.executeJavaScript(
+      'window.__mvChat ? window.__mvChat.set(' + (hide ? 'true' : 'false') + ') : false', true);
+    return Boolean(result);
+  } catch (e) {
+    return false;
+  }
+}
+
+function isFavourite(url) {
+  return state.favourites.some((f) => f.url === url);
+}
+
+/** Favourites store the page a tile is showing now, not the URL it started from. */
+function toggleFavourite(entry) {
+  const url = entry.currentUrl || entry.stream.url;
+  const index = state.favourites.findIndex((f) => f.url === url);
+  if (index >= 0) {
+    state.favourites.splice(index, 1);
+  } else {
+    state.favourites.unshift({ url, title: entry.stream.title || hostLabel(url) });
+  }
+  saveFavourites();
+  renderFavourites();
+  syncControls();
+}
+
+function renderFavourites() {
+  dom.favPanel.textContent = '';
+
+  if (!state.favourites.length) {
+    const empty = document.createElement('div');
+    empty.className = 'fav-empty';
+    empty.textContent = 'No favourites yet. Use ★ on a tile to save the page it is showing.';
+    dom.favPanel.append(empty);
+    return;
+  }
+
+  state.favourites.forEach((fav) => {
+    const row = document.createElement('div');
+    row.className = 'fav-row';
+
+    const open = document.createElement('button');
+    open.className = 'open';
+    open.textContent = fav.title;
+    open.title = fav.url;
+    open.addEventListener('click', () => {
+      addStream(fav.url);
+      dom.favPanel.hidden = true;
+    });
+
+    const drop = document.createElement('button');
+    drop.className = 'drop';
+    drop.textContent = '✕';
+    drop.title = 'Remove from favourites';
+    drop.addEventListener('click', () => {
+      state.favourites = state.favourites.filter((f) => f.url !== fav.url);
+      saveFavourites();
+      renderFavourites();
+      syncControls();
+    });
+
+    row.append(open, drop);
+    dom.favPanel.append(row);
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /* Tile construction                                                   */
 /* ------------------------------------------------------------------ */
 
@@ -198,6 +354,23 @@ function buildTile(stream) {
   const header = document.createElement('header');
   header.className = 'tile-header';
   header.draggable = true;
+
+  // Without these a tile is a dead end: clicking into a stream leaves no way
+  // back to the listing that led there.
+  const nav = document.createElement('div');
+  nav.className = 'tile-nav';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'tile-btn';
+  backBtn.textContent = '‹';
+  backBtn.title = 'Back';
+
+  const homeBtn = document.createElement('button');
+  homeBtn.className = 'tile-btn';
+  homeBtn.textContent = '⌂';
+  homeBtn.title = 'Whatnot home page';
+
+  nav.append(backBtn, homeBtn);
 
   const title = document.createElement('div');
   title.className = 'tile-title';
@@ -225,6 +398,16 @@ function buildTile(stream) {
 
   audio.append(muteBtn, volume, volumeValue);
 
+  const favBtn = document.createElement('button');
+  favBtn.className = 'tile-btn';
+  favBtn.textContent = '★';
+  favBtn.title = 'Save this page to favourites';
+
+  const chatBtn = document.createElement('button');
+  chatBtn.className = 'tile-btn';
+  chatBtn.textContent = '💬';
+  chatBtn.title = 'Show / hide the chat column';
+
   const soloBtn = document.createElement('button');
   soloBtn.className = 'tile-btn';
   soloBtn.textContent = 'S';
@@ -250,7 +433,11 @@ function buildTile(stream) {
   removeBtn.textContent = '✕';
   removeBtn.title = 'Remove tile';
 
-  header.append(title, audio, soloBtn, focusBtn, reloadBtn, externalBtn, removeBtn);
+  reloadBtn.classList.add('optional');
+  externalBtn.classList.add('optional');
+
+  header.append(nav, title, audio, favBtn, chatBtn, soloBtn, focusBtn,
+    reloadBtn, externalBtn, removeBtn);
 
   const body = document.createElement('div');
   body.className = 'tile-body';
@@ -273,7 +460,8 @@ function buildTile(stream) {
   el.append(header, body);
 
   const entry = {
-    stream, el, webview, title, volume, volumeValue, muteBtn, soloBtn, ready: false,
+    stream, el, webview, title, volume, volumeValue, muteBtn, soloBtn,
+    favBtn, chatBtn, ready: false, currentUrl: stream.url,
   };
 
   /* --- Tile controls --- */
@@ -319,6 +507,29 @@ function buildTile(stream) {
     window.app.openExternal(webview.getURL() || stream.url);
   });
 
+  backBtn.addEventListener('click', () => {
+    if (webview.canGoBack()) webview.goBack();
+  });
+
+  homeBtn.addEventListener('click', () => webview.loadURL(WHATNOT_HOME));
+
+  favBtn.addEventListener('click', () => toggleFavourite(entry));
+
+  chatBtn.addEventListener('click', async () => {
+    const want = !stream.chatHidden;
+    const applied = await setChatHidden(entry, want);
+    if (want && !applied) {
+      // The heuristic found no chat column - say so instead of silently failing.
+      chatBtn.title = 'No chat column found on this page';
+      chatBtn.classList.add('miss');
+      setTimeout(() => { chatBtn.classList.remove('miss'); }, 1200);
+      return;
+    }
+    stream.chatHidden = applied;
+    syncControls();
+    save();
+  });
+
   removeBtn.addEventListener('click', () => removeStream(stream.id));
 
   retryBtn.addEventListener('click', () => {
@@ -335,6 +546,11 @@ function buildTile(stream) {
       .then(() => applyAudio(entry))
       .catch(() => { /* injection blocked - muting still works */ });
     applyAudio(entry);
+
+    // The page is new after every navigation, so the chat state has to be redone.
+    webview.executeJavaScript(CHAT_HOOK, true)
+      .then(() => (stream.chatHidden ? setChatHidden(entry, true) : null))
+      .catch(() => { /* injection blocked */ });
   });
 
   webview.addEventListener('page-title-updated', (event) => {
@@ -353,7 +569,32 @@ function buildTile(stream) {
     el.classList.add('has-error');
   });
 
-  webview.addEventListener('did-navigate', () => el.classList.remove('has-error'));
+  webview.addEventListener('did-navigate', (event) => {
+    el.classList.remove('has-error');
+    entry.currentUrl = event.url || entry.currentUrl;
+    syncControls();
+  });
+
+  webview.addEventListener('did-navigate-in-page', (event) => {
+    if (!event.isMainFrame) return;
+    entry.currentUrl = event.url || entry.currentUrl;
+    syncControls();
+  });
+
+  // A bare username opens the profile. If that seller happens to be live,
+  // go straight to the stream - that is what the user actually wanted.
+  webview.addEventListener('did-finish-load', async () => {
+    if (!stream.followLive) return;
+    stream.followLive = false;
+    const url = webview.getURL() || '';
+    if (!/\/user\//.test(url)) return;
+    try {
+      const live = await webview.executeJavaScript(FIND_LIVE, true);
+      if (live && /\/live\//.test(live)) webview.loadURL(live);
+    } catch (e) {
+      /* page did not allow the lookup */
+    }
+  });
 
   /* --- Reordering by dragging the tile header --- */
 
@@ -459,6 +700,8 @@ function syncControls() {
     entry.el.classList.toggle('is-muted', !audible);
     entry.volume.value = String(entry.stream.volume);
     entry.volumeValue.textContent = String(entry.stream.volume);
+    entry.favBtn.classList.toggle('on', isFavourite(entry.currentUrl || entry.stream.url));
+    entry.chatBtn.classList.toggle('on', Boolean(entry.stream.chatHidden));
   });
 
   dom.layoutGroup.querySelectorAll('button').forEach((btn) => {
@@ -474,6 +717,8 @@ function syncControls() {
 /* ------------------------------------------------------------------ */
 
 function addStream(rawInput) {
+  const raw = String(rawInput).trim();
+  const fromUsername = /^@?[a-z0-9._-]{2,40}$/i.test(raw) && !/^https?:/i.test(raw);
   const url = normalizeInput(rawInput);
   if (!url) {
     dom.addInput.value = '';
@@ -488,6 +733,8 @@ function addStream(rawInput) {
     title: hostLabel(url),
     volume: 100,
     muted: startMuted,
+    chatHidden: false,
+    followLive: fromUsername,
   });
   render();
   save();
@@ -554,6 +801,17 @@ dom.layoutGroup.addEventListener('click', (event) => {
   save();
 });
 
+dom.favToggle.addEventListener('click', (event) => {
+  event.stopPropagation();
+  dom.favPanel.hidden = !dom.favPanel.hidden;
+});
+
+document.addEventListener('click', (event) => {
+  if (dom.favPanel.hidden) return;
+  if (dom.favPanel.contains(event.target) || event.target === dom.favToggle) return;
+  dom.favPanel.hidden = true;
+});
+
 dom.themeToggle.addEventListener('click', () => {
   state.theme = state.theme === 'dark' ? 'light' : 'dark';
   syncControls();
@@ -574,6 +832,12 @@ dom.signOut.addEventListener('click', async () => {
 document.addEventListener('keydown', (event) => {
   const target = event.target;
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+  if (event.altKey && event.key === 'ArrowLeft') {
+    const entry = state.focusId ? tiles.get(state.focusId) : null;
+    if (entry && entry.webview.canGoBack()) entry.webview.goBack();
+    event.preventDefault();
+    return;
+  }
   if (event.ctrlKey || event.altKey || event.metaKey) return;
 
   if (event.key >= '1' && event.key <= '9') {
@@ -598,4 +862,6 @@ document.addEventListener('keydown', (event) => {
 });
 
 load();
+loadFavourites();
+renderFavourites();
 render();

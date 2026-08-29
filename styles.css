@@ -291,3 +291,50 @@ kbd {
   font: inherit;
   font-size: 10px;
 }
+
+/* ---------- Favourites ---------- */
+.fav-wrap { position: relative; }
+
+.fav-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  width: 290px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow);
+}
+
+.fav-empty { padding: 10px; color: var(--text-dim); text-align: center; font-size: 12px; }
+
+.fav-row { display: flex; align-items: center; gap: 4px; border-radius: 6px; }
+.fav-row:hover { background: var(--bg-input); }
+.fav-row button { border: 0; background: transparent; color: var(--text); cursor: pointer; font: inherit; }
+.fav-row .open {
+  flex: 1; min-width: 0; text-align: left; padding: 7px 8px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fav-row .drop { padding: 7px 8px; color: var(--text-dim); }
+.fav-row .drop:hover { color: var(--live); }
+
+/* ---------- Tile navigation ---------- */
+.tile-nav { display: flex; gap: 1px; flex: none; }
+
+/* Narrow tiles: drop the numeric volume, then the less used buttons. */
+.tile { container-type: inline-size; }
+
+@container (max-width: 460px) {
+  .tile-audio { width: 92px; }
+  .tile-audio .value { display: none; }
+}
+@container (max-width: 360px) {
+  .tile-audio { width: 62px; }
+  .tile-btn.optional { display: none; }
+}
+
+.tile-btn.miss { color: var(--live); }

@@ -6,9 +6,9 @@ const WHATNOT_HOME = 'https://www.whatnot.com/';
 const WHATNOT_LOGIN = 'https://www.whatnot.com/login';
 
 /*
- * In die Streamseite injizierter Lautstaerkeregler.
- * Whatnot baut das <video> beim Reconnect neu auf, deshalb haelt ein Intervall
- * plus MutationObserver den eingestellten Pegel dauerhaft fest.
+ * Volume controller injected into the stream page.
+ * Whatnot rebuilds the <video> element on reconnect, so an interval plus a
+ * MutationObserver keep re-applying the level we want.
  */
 const AUDIO_HOOK = [
   '(() => {',
@@ -58,10 +58,11 @@ const dom = {
   openWhatnot: document.getElementById('open-whatnot'),
   openLogin: document.getElementById('open-login'),
   openLoginEmpty: document.getElementById('open-login-empty'),
+  signOut: document.getElementById('sign-out'),
 };
 
 /* ------------------------------------------------------------------ */
-/* Persistenz                                                          */
+/* Persistence                                                         */
 /* ------------------------------------------------------------------ */
 
 function save() {
@@ -77,7 +78,7 @@ function save() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (e) {
-    console.warn('Konnte Zustand nicht speichern', e);
+    console.warn('Could not save state', e);
   }
 }
 
@@ -107,12 +108,12 @@ function load() {
     state.cols = ['auto', '1', '2', '3', '4'].includes(data.cols) ? data.cols : 'auto';
     state.theme = data.theme === 'light' ? 'light' : 'dark';
   } catch (e) {
-    console.warn('Gespeicherter Zustand unlesbar', e);
+    console.warn('Stored state is unreadable', e);
   }
 }
 
 /* ------------------------------------------------------------------ */
-/* Helfer                                                              */
+/* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
 let idCounter = 0;
@@ -136,8 +137,7 @@ function hostLabel(url) {
 }
 
 /**
- * Nimmt einen vollen Link, eine Domain ohne Schema oder einen blossen
- * Whatnot-Usernamen entgegen.
+ * Accepts a full link, a scheme-less domain, or a bare Whatnot username.
  */
 function normalizeInput(raw) {
   const input = raw.trim();
@@ -153,10 +153,10 @@ function normalizeInput(raw) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Tonsteuerung                                                        */
+/* Audio control                                                       */
 /* ------------------------------------------------------------------ */
 
-/** Ist diese Kachel gerade hoerbar? Solo schlaegt Einzel-Mute, Master schlaegt alles. */
+/** Is this tile currently audible? Solo beats per-tile mute, master beats all. */
 function isAudible(stream) {
   if (state.masterMuted) return false;
   if (state.soloId !== null) return state.soloId === stream.id;
@@ -176,9 +176,9 @@ function applyAudio(entry) {
     entry.webview.setAudioMuted(!audible);
     entry.webview
       .executeJavaScript('window.__mvAudio && window.__mvAudio.set(' + vol.toFixed(4) + ')', true)
-      .catch(() => { /* Seite laedt gerade neu */ });
+      .catch(() => { /* page is reloading */ });
   } catch (e) {
-    /* webview noch nicht bereit */
+    /* webview not ready yet */
   }
 }
 
@@ -187,7 +187,7 @@ function applyAllAudio() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Kachel-Aufbau                                                       */
+/* Tile construction                                                   */
 /* ------------------------------------------------------------------ */
 
 function buildTile(stream) {
@@ -209,7 +209,7 @@ function buildTile(stream) {
 
   const muteBtn = document.createElement('button');
   muteBtn.className = 'tile-btn';
-  muteBtn.title = 'Stumm / laut';
+  muteBtn.title = 'Mute / unmute';
 
   const volume = document.createElement('input');
   volume.className = 'slider';
@@ -217,7 +217,7 @@ function buildTile(stream) {
   volume.min = '0';
   volume.max = '100';
   volume.value = String(stream.volume);
-  volume.title = 'Lautstaerke dieser Kachel';
+  volume.title = 'Volume for this tile';
 
   const volumeValue = document.createElement('span');
   volumeValue.className = 'value';
@@ -228,27 +228,27 @@ function buildTile(stream) {
   const soloBtn = document.createElement('button');
   soloBtn.className = 'tile-btn';
   soloBtn.textContent = 'S';
-  soloBtn.title = 'Nur diesen Stream hoeren (Solo)';
+  soloBtn.title = 'Hear only this stream (solo)';
 
   const focusBtn = document.createElement('button');
   focusBtn.className = 'tile-btn';
   focusBtn.textContent = '⛶';
-  focusBtn.title = 'Gross / zurueck ins Raster';
+  focusBtn.title = 'Enlarge / back to the grid';
 
   const reloadBtn = document.createElement('button');
   reloadBtn.className = 'tile-btn';
   reloadBtn.textContent = '⟳';
-  reloadBtn.title = 'Neu laden';
+  reloadBtn.title = 'Reload';
 
   const externalBtn = document.createElement('button');
   externalBtn.className = 'tile-btn';
   externalBtn.textContent = '↗';
-  externalBtn.title = 'Im Browser oeffnen';
+  externalBtn.title = 'Open in system browser';
 
   const removeBtn = document.createElement('button');
   removeBtn.className = 'tile-btn danger';
   removeBtn.textContent = '✕';
-  removeBtn.title = 'Kachel entfernen';
+  removeBtn.title = 'Remove tile';
 
   header.append(title, audio, soloBtn, focusBtn, reloadBtn, externalBtn, removeBtn);
 
@@ -263,10 +263,10 @@ function buildTile(stream) {
   const error = document.createElement('div');
   error.className = 'tile-error';
   const errorText = document.createElement('div');
-  errorText.textContent = 'Stream konnte nicht geladen werden.';
+  errorText.textContent = 'This stream could not be loaded.';
   const retryBtn = document.createElement('button');
   retryBtn.className = 'btn';
-  retryBtn.textContent = 'Erneut versuchen';
+  retryBtn.textContent = 'Try again';
   error.append(errorText, retryBtn);
 
   body.append(webview, error);
@@ -276,12 +276,12 @@ function buildTile(stream) {
     stream, el, webview, title, volume, volumeValue, muteBtn, soloBtn, ready: false,
   };
 
-  /* --- Bedienelemente der Kachel --- */
+  /* --- Tile controls --- */
 
   muteBtn.addEventListener('click', () => {
     stream.muted = !stream.muted;
-    // Lautschalten bei fremdem Solo hebt das Solo auf, sonst passiert
-    // scheinbar nichts.
+    // Unmuting while another tile is soloed releases the solo, otherwise
+    // nothing would appear to happen.
     if (!stream.muted && state.soloId !== null && state.soloId !== stream.id) {
       state.soloId = null;
     }
@@ -326,14 +326,14 @@ function buildTile(stream) {
     webview.loadURL(stream.url);
   });
 
-  /* --- Ereignisse des Webviews --- */
+  /* --- Webview events --- */
 
   webview.addEventListener('dom-ready', () => {
     entry.ready = true;
     webview
       .executeJavaScript(AUDIO_HOOK, true)
       .then(() => applyAudio(entry))
-      .catch(() => { /* Injection blockiert - Mute greift trotzdem */ });
+      .catch(() => { /* injection blocked - muting still works */ });
     applyAudio(entry);
   });
 
@@ -347,15 +347,15 @@ function buildTile(stream) {
   });
 
   webview.addEventListener('did-fail-load', (event) => {
-    // -3 = ERR_ABORTED, tritt bei jeder normalen Navigation auf.
+    // -3 = ERR_ABORTED, which happens on every ordinary navigation.
     if (event.errorCode === -3 || !event.isMainFrame) return;
-    errorText.textContent = 'Stream konnte nicht geladen werden (' + event.errorDescription + ').';
+    errorText.textContent = 'This stream could not be loaded (' + event.errorDescription + ').';
     el.classList.add('has-error');
   });
 
   webview.addEventListener('did-navigate', () => el.classList.remove('has-error'));
 
-  /* --- Reihenfolge per Drag & Drop am Kachelkopf --- */
+  /* --- Reordering by dragging the tile header --- */
 
   header.addEventListener('dragstart', (event) => {
     event.dataTransfer.setData('text/plain', stream.id);
@@ -382,12 +382,12 @@ function buildTile(stream) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Rendern und Layout                                                  */
+/* Rendering and layout                                                */
 /* ------------------------------------------------------------------ */
 
 /**
- * Gleicht das DOM an den Zustand an. Bestehende Webviews werden nur
- * verschoben, nie neu erzeugt - sonst wuerde jeder Stream neu starten.
+ * Reconciles the DOM against state. Existing webviews are only moved, never
+ * recreated, because recreating one would restart the stream.
  */
 function render() {
   const seen = new Set();
@@ -412,7 +412,7 @@ function render() {
 
   document.body.classList.toggle('is-empty', state.streams.length === 0);
   dom.statusCount.textContent =
-    state.streams.length + (state.streams.length === 1 ? ' Stream' : ' Streams');
+    state.streams.length + (state.streams.length === 1 ? ' stream' : ' streams');
 
   applyLayout();
   syncControls();
@@ -444,7 +444,7 @@ function applyLayout() {
   dom.grid.style.gridTemplateRows = 'repeat(' + rows + ', minmax(240px, 1fr))';
 }
 
-/** Bringt alle Bedienelemente auf den Stand des Zustands. */
+/** Brings every control in sync with the current state. */
 function syncControls() {
   dom.masterVolume.value = String(state.masterVolume);
   dom.masterVolumeValue.textContent = String(state.masterVolume);
@@ -470,17 +470,17 @@ function syncControls() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Aktionen                                                            */
+/* Actions                                                             */
 /* ------------------------------------------------------------------ */
 
 function addStream(rawInput) {
   const url = normalizeInput(rawInput);
   if (!url) {
     dom.addInput.value = '';
-    dom.addInput.placeholder = 'Bitte einen gueltigen Link oder Usernamen eingeben';
+    dom.addInput.placeholder = 'Enter a valid link or username';
     return false;
   }
-  // Neue Kacheln starten stumm, damit nicht ploetzlich alles durcheinanderredet.
+  // New tiles start muted so that adding one never makes everything talk at once.
   const startMuted = state.streams.length > 0;
   state.streams.push({
     id: nextId(),
@@ -522,7 +522,7 @@ function soloByIndex(index) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Globale Bedienelemente                                              */
+/* Global controls                                                     */
 /* ------------------------------------------------------------------ */
 
 dom.addForm.addEventListener('submit', (event) => {
@@ -563,6 +563,13 @@ dom.themeToggle.addEventListener('click', () => {
 dom.openWhatnot.addEventListener('click', () => addStream(WHATNOT_HOME));
 dom.openLogin.addEventListener('click', () => addStream(WHATNOT_LOGIN));
 dom.openLoginEmpty.addEventListener('click', () => addStream(WHATNOT_LOGIN));
+
+dom.signOut.addEventListener('click', async () => {
+  const cleared = await window.app.resetSession();
+  if (!cleared) return;
+  // Every tile still shows the signed-in page until it is reloaded.
+  tiles.forEach((entry) => entry.webview.reload());
+});
 
 document.addEventListener('keydown', (event) => {
   const target = event.target;

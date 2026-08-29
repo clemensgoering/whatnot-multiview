@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Demo stream</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font: 14px/1.4 "Segoe UI", system-ui, sans-serif; }
+  body { display: flex; background: #0a0c10; color: #e7ecf3; overflow: hidden; }
+
+  .stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+  .stage::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 40%, transparent 30%, rgba(0,0,0,0.55) 100%);
+  }
+  .product {
+    width: 58%; aspect-ratio: 1 / 1.25; border-radius: 14px;
+    background: linear-gradient(150deg, var(--a), var(--b));
+    box-shadow: 0 18px 50px rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 46px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(255,255,255,0.92); text-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  }
+
+  .live {
+    position: absolute; top: 12px; left: 12px; z-index: 2;
+    display: flex; align-items: center; gap: 6px;
+    background: #ff2d46; color: #fff; font-weight: 700; font-size: 11px;
+    letter-spacing: 1px; padding: 4px 9px; border-radius: 5px;
+  }
+  .live i { width: 6px; height: 6px; border-radius: 50%; background: #fff; display: block; }
+
+  .viewers {
+    position: absolute; top: 12px; right: 12px; z-index: 2;
+    background: rgba(0,0,0,0.55); padding: 4px 9px; border-radius: 5px; font-size: 11px;
+  }
+
+  .bidbar {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+    padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85) 45%);
+  }
+  .price { font-size: 22px; font-weight: 700; }
+  .price small { display: block; font-size: 10px; font-weight: 400; opacity: 0.65; letter-spacing: 0.5px; }
+  .bid {
+    margin-left: auto; background: #ffb020; color: #23180a;
+    font-weight: 700; padding: 9px 18px; border-radius: 8px; font-size: 13px;
+  }
+
+  .chat {
+    width: 230px; flex: none; border-left: 1px solid #1b212b;
+    background: #0d1016; padding: 10px; display: flex; flex-direction: column; gap: 9px;
+  }
+  .chat h4 { margin: 0 0 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; }
+  .msg { font-size: 12px; }
+  .msg b { color: var(--a); }
+  .msg span { opacity: 0.85; }
+
+  .demo {
+    position: absolute; bottom: 62px; left: 50%; transform: translateX(-50%); z-index: 3;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.18);
+    padding: 3px 10px; border-radius: 20px; opacity: 0.75;
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <span class="live"><i></i>LIVE</span>
+    <span class="viewers" id="viewers">312 watching</span>
+    <div class="product" id="product">LOT 04</div>
+    <span class="demo">Demo content</span>
+    <div class="bidbar">
+      <div class="price"><small>CURRENT BID</small><span id="price">$24</span></div>
+      <div class="bid">Place bid</div>
+    </div>
+  </div>
+  <aside class="chat">
+    <h4 id="seller">seller</h4>
+    <div class="msg"><b>mika</b> <span>is that the full set?</span></div>
+    <div class="msg"><b>jules</b> <span>in for the next one</span></div>
+    <div class="msg"><b>ren</b> <span>ship to EU? 🙌</span></div>
+    <div class="msg"><b>toby</b> <span>gorgeous condition</span></div>
+    <div class="msg"><b>sam</b> <span>bid placed</span></div>
+  </aside>
+<script>
+  // Farben und Texte kommen aus der Query, damit jede Kachel anders aussieht.
+  const q = new URLSearchParams(location.search);
+  const a = q.get('a') || '#6d8bff';
+  const b = q.get('b') || '#2b2f6d';
+  document.documentElement.style.setProperty('--a', a);
+  document.documentElement.style.setProperty('--b', b);
+  document.getElementById('product').textContent = q.get('lot') || 'LOT 04';
+  document.getElementById('price').textContent = q.get('price') || '$24';
+  document.getElementById('viewers').textContent = (q.get('v') || '312') + ' watching';
+  document.getElementById('seller').textContent = q.get('seller') || 'demo seller';
+  document.title = q.get('seller') || 'Demo stream';
+</script>
+</body>
+</html>

@@ -1,42 +1,42 @@
+<div align="center">
+
+<img src="build/icon.png" width="104" alt="Whatnot MultiView icon" />
+
 # Whatnot MultiView
 
-Watch several Whatnot livestreams side by side in one window, with a dark UI and
-per-stream volume control.
+**Watch several Whatnot livestreams side by side — with a dark UI and per-stream volume control.**
 
-Whatnot's own site shows one stream at a time. Juggling browser tabs does not
-really work either, because every tab keeps playing audio and you end up hunting
-for the one that is talking. MultiView puts the streams in a grid and gives each
-one its own volume slider, a mute button and a solo button.
+[Download](https://github.com/clemensgoering/whatnot-multiview/releases) ·
+[Guide](docs/README.md) ·
+[Installation](docs/installation.md) ·
+[Audio](docs/audio.md) ·
+[Troubleshooting](docs/troubleshooting.md)
+
+</div>
+
+![Four streams in the grid](docs/images/02-grid.png)
+
+Whatnot shows one stream at a time. Browser tabs do not solve it either, because
+every tab keeps playing audio and you end up hunting for the one that is talking.
+MultiView puts the streams in a grid and gives each tile its own volume slider, a
+mute button and a solo button. Press `1`–`9` to hear exactly one stream and
+silence the rest — without pausing any of them.
 
 > Not affiliated with, endorsed by, or connected to Whatnot Inc. This is a
-> personal viewer that renders whatnot.com in embedded browser views. You still
-> need your own Whatnot account, and your use of the site remains subject to
-> Whatnot's Terms of Service.
+> personal viewer that renders whatnot.com in embedded browser views. You need
+> your own Whatnot account, and your use of the site remains subject to Whatnot's
+> Terms of Service.
 
-## Why a desktop app and not a website
+## Install
 
-This was the first thing I checked, and it settles the architecture:
+**[Download the installer](https://github.com/clemensgoering/whatnot-multiview/releases)** for Windows, macOS or Linux. No Node.js, no terminal.
 
-```
-$ curl -sSI https://www.whatnot.com/ | grep -i x-frame-options
-X-Frame-Options: SAMEORIGIN
-```
+The builds are not code-signed, so Windows SmartScreen shows a warning on first
+launch — see [Installation](docs/installation.md#about-the-security-warning) for
+what to click, and for building from source if you would rather not.
 
-Whatnot sends `X-Frame-Options: SAMEORIGIN` plus a strict Content-Security-Policy.
-No website and no `<iframe>` can embed those streams — a browser-based multiview
-is technically impossible, not merely inconvenient.
-
-This app uses Electron `<webview>` containers instead. Those are genuine separate
-browser views rather than frames, so the embedding restriction does not apply to
-them. Each tile is a full browser: you can log in, browse, bid and chat inside it.
-
-## Requirements
-
-- Node.js 18 or newer
-- Windows, macOS or Linux
-- A Whatnot account
-
-## Install and run
+<details>
+<summary>Run from source instead</summary>
 
 ```bash
 git clone https://github.com/clemensgoering/whatnot-multiview.git
@@ -45,124 +45,99 @@ npm install
 npm start
 ```
 
-`npm start` goes through `launch.js`, which strips `ELECTRON_RUN_AS_NODE` from the
-environment. Without that, launching from a VS Code integrated terminal makes
-Electron start as plain Node, `app` is undefined and the window never appears.
+Requires Node.js 18+. `npm start` goes through `launch.js`, which strips
+`ELECTRON_RUN_AS_NODE` — without that, launching from a VS Code terminal makes
+Electron start as plain Node and the window never appears.
 
-## Usage
+</details>
 
-### Adding streams
+## What it does
 
-Paste into the input at the top:
-
-- a full link — `https://www.whatnot.com/live/...`
-- a link without the scheme — `whatnot.com/live/...`
-- a bare username — `seller123`, which opens that profile
-
-The most practical route is the **Login** button in the toolbar: sign in once,
-then browse and click streams directly inside the tile. All tiles share one
-session, so a single login covers every tile and survives restarts.
-
-### Audio
-
-This is the part the app exists for.
-
-| Control | Effect |
+| | |
 | --- | --- |
-| Slider per tile | That stream's own volume, 0–100 |
-| Speaker button | Mute or unmute a single tile |
-| `S` (solo) | Hear only this stream, silence the rest; click again to release |
-| Master slider | Scales every tile together |
+| **Per-stream audio** | Own volume slider and mute per tile, plus a master level |
+| **Solo** | `1`–`9` hears one stream and silences the rest; nothing pauses |
+| **Focus mode** | One tile fills the window while the others keep playing unseen |
+| **Flexible grid** | Auto-square layout or a forced 1–4 columns, drag to reorder |
+| **Dark by default** | Light theme one click away, both as CSS custom properties |
+| **One login** | All tiles share a session; it survives restarts |
 
-New tiles start muted, so adding a stream never makes everything talk at once.
+Everything — stream list, volumes, layout, theme — is remembered between sessions.
 
-Volume is applied by setting `volume` on the `<video>` elements inside the page.
-A `MutationObserver` and a short interval re-apply it, because the player is
-rebuilt on reconnect. If that injection ever fails, muting still works at the
-webview level as a fallback.
+Full walkthrough in the **[guide](docs/README.md)**.
 
-### Keyboard
+## Why a desktop app and not a website
 
-| Key | Action |
-| --- | --- |
-| `1`–`9` | Solo tile 1–9 (press again to release) |
-| `0` | Release solo |
-| `M` | Mute everything / restore |
-| `Esc` | Leave focus mode |
-| `F11` | Fullscreen |
+This was the first thing checked, and it settles the architecture:
 
-### Layout
+```console
+$ curl -sSI https://www.whatnot.com/ | grep -i x-frame-options
+X-Frame-Options: SAMEORIGIN
+```
 
-- `Auto` arranges tiles roughly square; `1`–`4` forces a column count
-- `⛶` on a tile makes it fill the window. The others keep running unseen, so
-  their audio continues
-- Drag a tile by its header to reorder
-- `⟳` reload, `↗` open in your system browser, `✕` remove
+Whatnot sends `X-Frame-Options: SAMEORIGIN` plus a strict Content-Security-Policy.
+No website and no `<iframe>` can embed those streams — a browser-based multiview
+is impossible, not merely inconvenient.
 
-Stream list, volumes, layout and theme are saved automatically.
+This app uses Electron `<webview>` containers instead. Those are genuine separate
+browser views rather than frames, so the restriction does not apply. Each tile is
+a full browser: you can log in, browse, bid and chat inside it.
 
-## Logging in
+## A note on browser identity
 
-Two findings worth knowing, both discovered the hard way.
-
-### Google sign-in does not work, and cannot be made to
-
-Google blocks its sign-in flow inside embedded browser views on principle
-("This browser or app may not be secure"). It is a fixed anti-phishing policy
-with no allowlist — and it cannot be configured away in the Google Cloud Console
-either, because the OAuth client belongs to Whatnot, not to this app.
-
-Use **email and password** on Whatnot's login page instead. Apple and Facebook
-work as well.
-
-### Do not fake the user agent
-
-An earlier version set the user agent to `Chrome/131` while `navigator.userAgentData`
+An early version set a fake `Chrome/131` user agent while `navigator.userAgentData`
 still reported `Chromium 130`. Both Google's sign-in and Whatnot's fraud detection
 flagged exactly that contradiction — a browser that misrepresents itself
-inconsistently is a far stronger bot signal than an honest one.
+inconsistently is a stronger bot signal than an honest one. Removing the spoof
+fixed the login.
 
-The spoofing was removed. The app now identifies itself truthfully as
-`Chrome/130 Electron/33`, with version and brand consistent, and login works.
+So this app deliberately does **not** disguise its browser identity. That
+detection protects against account takeover and bidding bots, working around it
+violates Whatnot's terms, and bidding involves real money.
 
-This app deliberately does **not** disguise its browser identity. That detection
-protects against account takeover and bidding bots, working around it violates
-Whatnot's terms, and bidding involves real money.
+Google sign-in stays blocked regardless — that is a fixed Google policy for
+embedded views. Use email and password, or Apple or Facebook. Details in
+[Troubleshooting](docs/troubleshooting.md).
 
-If a login problem shows up anyway:
+## Project layout
 
-1. Accept the cookie banner inside the tile. While it is up, it blocks the page.
-2. `npm run reset-session`, then restart. This clears only this app's cookies and
-   storage.
-
-## Project structure
-
-| File | Purpose |
+| Path | Purpose |
 | --- | --- |
-| `main.js` | Electron main process, shared session, popup rules |
-| `preload.js` | Narrow bridge to the renderer (`openExternal`, fullscreen) |
+| `main.js` | Electron main process, shared session, popup and IPC rules |
+| `preload.js` | Narrow bridge to the renderer |
 | `renderer.js` | State, tiles, audio logic, layout |
-| `index.html` / `styles.css` | Interface, dark and light color tokens |
-| `launch.js` | Launcher with a cleaned environment |
-| `reset-session.js` | Deletes the stored Whatnot session |
+| `index.html` · `styles.css` | Interface and colour tokens |
+| `launch.js` | Dev launcher with a cleaned environment |
+| `reset-session.js` | Deletes the stored session from the command line |
+| `tools/make-assets.js` | Regenerates the screenshots and app icon |
+| `docs/` | The guide |
 
 Tiles are reconciled rather than re-rendered: existing `<webview>` elements are
-moved in the DOM, never recreated, because recreating one would restart the stream.
+moved in the DOM, never recreated, because recreating one restarts the stream.
 
-OAuth popups from Whatnot, Google, Apple and Facebook are kept inside the app so
-the session cookie lands in this app's partition. Everything else opens in the
-system browser.
+### Regenerating screenshots and icons
 
-Source comments are in German.
+```bash
+npm run assets
+```
+
+Renders the real interface with a local demo page in the tiles — so no
+third-party content or account details land in the repository — and writes
+`docs/images/*.png`, `build/icon.png` and `build/icon.ico`.
 
 ## Known limitations
 
-- A Whatnot login is required to watch — via email and password, not Google.
+- A Whatnot login is required, via email and password rather than Google.
 - Many parallel video streams cost CPU and bandwidth. Beyond roughly six at once
   it pays to close tiles you are not watching.
 - Volume control depends on Whatnot's player using standard `<video>` elements.
-  Should that change, hard muting at the webview level still works, and only the
+  Should that change, muting and solo still work at the webview level; only the
   fine-grained levels would be affected.
+
+## Contributing
+
+Issues and pull requests are welcome. There is no build step for the app itself —
+edit the files and run `npm start`.
 
 ## License
 

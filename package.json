@@ -5,12 +5,18 @@
   "main": "main.js",
   "scripts": {
     "start": "node launch.js",
-    "reset-session": "node reset-session.js"
+    "reset-session": "node reset-session.js",
+    "assets": "node tools/run.js tools/make-assets.js",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
   },
   "author": "clemensgoering",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^33.2.0"
+    "electron": "^33.2.0",
+    "electron-builder": "^26.15.3"
   },
   "repository": {
     "type": "git",
@@ -29,5 +35,69 @@
   ],
   "engines": {
     "node": ">=18"
+  },
+  "build": {
+    "appId": "com.clemensgoering.whatnot-multiview",
+    "productName": "Whatnot MultiView",
+    "copyright": "Copyright (c) 2026 clemensgoering",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Whatnot MultiView",
+      "artifactName": "WhatnotMultiView-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.entertainment",
+      "artifactName": "WhatnotMultiView-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "AudioVideo",
+      "artifactName": "WhatnotMultiView-${version}.${ext}"
+    }
   }
 }

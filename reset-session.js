@@ -1,13 +1,13 @@
-// Loescht die gespeicherte Whatnot-Session (Cookies, Storage) dieser App.
-// Nuetzlich, wenn ein Login-Versuch haengt oder die Seite die Sitzung
-// als auffaellig markiert hat und man sauber neu anfangen will.
+// Deletes this app's stored Whatnot session (cookies, storage).
+// Useful when a login attempt gets stuck or the site has flagged the session,
+// and you want to start clean.
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
 const APP_NAME = 'whatnot-multiview';
 
-// Entspricht dem, was Electron als app.getPath('userData') liefert.
+// Mirrors what Electron returns for app.getPath('userData').
 function userDataDir() {
   const home = os.homedir();
   if (process.platform === 'win32') {

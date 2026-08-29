@@ -1,6 +1,6 @@
-// Startet Electron in einem sauberen Environment.
-// VS-Code-Terminals setzen ELECTRON_RUN_AS_NODE=1 - damit wuerde electron.exe
-// als reines Node starten und "app" waere undefined.
+// Starts Electron with a clean environment.
+// VS Code terminals set ELECTRON_RUN_AS_NODE=1, which would make electron.exe
+// start as plain Node, leaving "app" undefined and the window never appearing.
 const { spawn } = require('child_process');
 const electronPath = require('electron');
 

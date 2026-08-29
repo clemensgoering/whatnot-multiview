@@ -1,9 +1,9 @@
-const { app, BrowserWindow, shell, ipcMain, session } = require('electron');
+const { app, BrowserWindow, dialog, shell, ipcMain, session } = require('electron');
 const path = require('path');
 
-// Streams sollen ohne Klick starten - sonst muss man jede Kachel einzeln antippen.
+// Streams should start without a click, otherwise every tile needs tapping first.
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
-// Hardware-Decoding fuer mehrere parallele Videostreams.
+// Hardware decoding for several parallel video streams.
 app.commandLine.appendSwitch('enable-features', 'PlatformHEVCDecoderSupport');
 
 let mainWindow = null;
@@ -26,17 +26,17 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 /*
- * Alle Kacheln teilen sich eine Session -> einmal einloggen reicht fuer alle Streams.
+ * All tiles share one session, so a single login covers every stream.
  *
- * Bewusst KEINE User-Agent-Faelschung mehr: ein vorgetaeuschter Chrome-UA passte
- * nicht zu den Client Hints (UA sagte Chrome 131, navigator.userAgentData sagte
- * Chromium 130). Genau diese Widerspruechlichkeit ist fuer Bot-Erkennung ein
- * staerkeres Alarmsignal als eine ehrliche Kennung.
+ * Deliberately NO user-agent spoofing: a faked Chrome UA did not match the
+ * client hints (the UA claimed Chrome 131 while navigator.userAgentData
+ * reported Chromium 130). That contradiction is a stronger bot signal than an
+ * honest identity, and it tripped both Google sign-in and Whatnot's fraud check.
  */
 function configureStreamSession() {
   session.fromPartition('persist:whatnot');
@@ -51,9 +51,9 @@ app.whenReady().then(() => {
   });
 });
 
-// Login ueber Google/Apple/Facebook laeuft ueber ein Popup. Das muss in der App
-// bleiben, sonst landet das Session-Cookie im Systembrowser statt in unserer
-// Partition. Alles andere geht bewusst nach draussen.
+// Google/Apple/Facebook sign-in runs through a popup. It has to stay inside the
+// app, otherwise the session cookie lands in the system browser instead of our
+// partition. Everything else is deliberately sent outward.
 const POPUP_HOSTS = ['whatnot.com', 'accounts.google.com', 'appleid.apple.com', 'facebook.com'];
 
 function isLoginPopup(url) {
@@ -90,6 +90,22 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('open-external', (_event, url) => {
   if (typeof url === 'string' && /^https?:/.test(url)) return shell.openExternal(url);
+});
+
+// Packaged users have no npm scripts, so signing out has to be reachable in the UI.
+ipcMain.handle('reset-session', async () => {
+  const { response } = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    buttons: ['Sign out', 'Cancel'],
+    defaultId: 1,
+    cancelId: 1,
+    title: 'Sign out of Whatnot',
+    message: 'Clear the stored Whatnot session?',
+    detail: 'Cookies and site storage for all tiles are deleted. Your stream list is kept.',
+  });
+  if (response !== 0) return false;
+  await session.fromPartition('persist:whatnot').clearStorageData();
+  return true;
 });
 
 ipcMain.handle('toggle-fullscreen', () => {

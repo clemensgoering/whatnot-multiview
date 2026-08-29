@@ -1,10 +1,9 @@
 # Abhaengigkeiten
 node_modules/
 
-# Build-Ausgaben
+# Build-Ausgaben (build/ enthaelt die Icons und gehoert ins Repo)
 dist/
 out/
-build/
 
 # Logs
 *.log
@@ -26,3 +25,6 @@ desktop.ini
 # Lokale Umgebung
 .env
 .env.*
+
+# Build-Ausgaben von electron-builder
+dist/

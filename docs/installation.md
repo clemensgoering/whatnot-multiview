@@ -26,12 +26,43 @@ No Node.js, no terminal, no `npm` — everything is bundled.
 ### About the security warning
 
 The builds are not code-signed, because a signing certificate costs money every
-year. Windows SmartScreen will therefore show *"Windows protected your PC"* on
-first launch. Click **More info → Run anyway**. macOS will say the developer
-cannot be verified; right-click the app and choose **Open**.
+year. Every download therefore triggers a warning on first launch.
 
-If that is not acceptable to you — a reasonable position — build from source
-instead. You then run code you compiled yourself.
+**Windows** shows *"Windows protected your PC"* with only a **Don't run** button
+visible. The one you want is hidden: click **More info** first, and **Run anyway**
+appears next to it.
+
+**macOS** says the developer cannot be verified. Right-click the app and choose
+**Open**, which offers a confirmation the plain double-click does not.
+
+### Verifying a download
+
+Releases after v1.0.0 carry a `SHA256SUMS.txt` listing the checksum of every
+file, so you can confirm a download is byte-for-byte what the build produced:
+
+```powershell
+# Windows
+Get-FileHash .\WhatnotMultiView-Setup-1.0.0.exe -Algorithm SHA256
+```
+
+```bash
+# macOS / Linux
+shasum -a 256 WhatnotMultiView-1.0.0.dmg
+```
+
+This proves the file arrived intact. It is not a substitute for code signing,
+which is what would remove the warning itself.
+
+### Removing the warning properly
+
+Only a code signing certificate does that. If you fork this and want signed
+builds, the realistic options are an OV certificate (a few hundred euro a year,
+and SmartScreen only trusts it once the signature has built reputation), an EV
+certificate (more expensive, trusted immediately), or Azure Trusted Signing,
+which is far cheaper and works with electron-builder.
+
+If none of that appeals — a reasonable position — build from source instead. You
+then run code you compiled yourself, and no warning appears.
 
 ## From source
 

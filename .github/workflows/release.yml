@@ -56,7 +56,18 @@ jobs:
         with:
           path: artifacts
 
+      # Lets anyone confirm a download is byte-for-byte what CI produced.
+      - name: Generate checksums
+        working-directory: artifacts
+        run: |
+          find . -type f -exec sha256sum {} + \
+            | awk '{ name = $2; sub(/.*\//, "", name); print $1 "  " name }' \
+            | sort -k2 > ../SHA256SUMS.txt
+          cat ../SHA256SUMS.txt
+
       - uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/*
+          files: |
+            artifacts/**/*
+            SHA256SUMS.txt
           generate_release_notes: true

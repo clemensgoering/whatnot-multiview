@@ -1,0 +1,31 @@
+name: Checks
+
+# Cheap gate on every push and pull request. Deliberately installs nothing:
+# both checks are plain Node, so the job finishes in seconds instead of
+# downloading Electron to look at some Markdown.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Parses without running, so browser globals in renderer.js are fine.
+      - name: Syntax
+        run: |
+          for file in *.js tools/*.js; do
+            node --check "$file" && echo "  ok  $file"
+          done
+
+      - name: Documentation links
+        run: node tools/check-links.js

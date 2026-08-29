@@ -62,7 +62,8 @@
   body.mobile { flex-direction: column; }
   body.mobile .chat { width: auto; border-left: 0; border-top: 1px solid #1b212b; height: 45%; }
   body.mobile .stage { flex: 1; min-height: 0; }
-  .msg { font-size: 12px; }
+  .msgs { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 9px; }
+  .msg { font-size: 12px; flex: none; }
   .msg b { color: var(--a); }
   .msg span { opacity: 0.85; }
 
@@ -87,11 +88,7 @@
   </div>
   <aside class="chat">
     <h4 id="seller">seller</h4>
-    <div class="msg"><b>mika</b> <span>is that the full set?</span></div>
-    <div class="msg"><b>jules</b> <span>in for the next one</span></div>
-    <div class="msg"><b>ren</b> <span>ship to EU? 🙌</span></div>
-    <div class="msg"><b>toby</b> <span>gorgeous condition</span></div>
-    <div class="msg"><b>sam</b> <span>bid placed</span></div>
+    <div class="msgs" id="msgs"></div>
     <div class="composer"><input type="text" placeholder="Say something" aria-label="Chat message" /></div>
   </aside>
 <script>
@@ -107,6 +104,24 @@
   document.getElementById('seller').textContent = q.get('seller') || 'demo seller';
   document.title = q.get('seller') || 'Demo stream';
   if (q.get('layout') === 'mobile') document.body.classList.add('mobile');
+
+  // Enough messages that the list actually scrolls, like a real chat.
+  const NAMES = ['mika', 'jules', 'ren', 'toby', 'sam', 'ana', 'kit', 'noa', 'ivo', 'pia'];
+  const LINES = ['is that the full set?', 'in for the next one', 'ship to EU? 🙌',
+    'gorgeous condition', 'bid placed', 'what is the start price?', 'love this one',
+    'can you show the back?', 'gone already?', 'nice pull'];
+  const list = document.getElementById('msgs');
+  for (let i = 0; i < 26; i += 1) {
+    const row = document.createElement('div');
+    row.className = 'msg';
+    const who = document.createElement('b');
+    who.textContent = NAMES[i % NAMES.length];
+    const what = document.createElement('span');
+    what.textContent = ' ' + LINES[i % LINES.length];
+    row.append(who, what);
+    list.append(row);
+  }
+  list.scrollTop = list.scrollHeight;
 </script>
 </body>
 </html>

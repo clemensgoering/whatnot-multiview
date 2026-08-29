@@ -60,7 +60,7 @@ Electron start as plain Node and the window never appears.
 | **Focus mode** | One tile fills the window while the others keep playing unseen |
 | **Flexible grid** | Auto-square layout or a forced 1–4 columns, drag to reorder |
 | **Dark by default** | Light theme one click away, both as CSS custom properties |
-| **Chat toggle** | Collapse the chat column per tile to give the video the room |
+| **Chat toggle** | Collapse the chat to give the video the room; shift-click to pick it by hand |
 | **Favourites** | Save any page a tile is showing and reopen it in one click |
 | **Real navigation** | Back and home buttons per tile, so a tile is never a dead end |
 | **One login** | All tiles share a session; it survives restarts |
@@ -109,6 +109,7 @@ embedded views. Use email and password, or Apple or Facebook. Details in
 | `main.js` | Electron main process, shared session, popup and IPC rules |
 | `preload.js` | Narrow bridge to the renderer |
 | `renderer.js` | State, tiles, audio logic, layout |
+| `chat-inject.js` | Source of the script injected into stream pages to hide the chat |
 | `index.html` · `styles.css` | Interface and colour tokens |
 | `launch.js` | Dev launcher with a cleaned environment |
 | `reset-session.js` | Deletes the stored session from the command line |

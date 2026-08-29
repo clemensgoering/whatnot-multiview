@@ -48,6 +48,7 @@
       "main.js",
       "preload.js",
       "renderer.js",
+      "chat-inject.js",
       "index.html",
       "styles.css",
       "package.json"

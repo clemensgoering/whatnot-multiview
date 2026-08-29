@@ -34,85 +34,8 @@ const AUDIO_HOOK = [
 
 const FAVOURITES_KEY = 'whatnot-multiview.favourites.v1';
 
-/*
- * Hides the chat column inside the stream page.
- *
- * Deliberately a runtime heuristic rather than a hard-coded selector: it looks
- * for the outermost tall, narrow element sitting to the right of the video.
- * Whatnot's class names change without notice, the page geometry does not.
- */
-const CHAT_HOOK = [
-  '(() => {',
-  '  if (window.__mvChat) return true;',
-  '  const st = { hidden: false, el: null, prev: "" };',
-  '  const CHATTY = /chat|message|nachricht|say something|kommentar|comment/i;',
-  '  function depth(el) { let d = 0, n = el; while (n.parentElement) { d += 1; n = n.parentElement; } return d; }',
-  '  // Desktop layout: a tall, narrow column to the right of the video.',
-  '  function byGeometry() {',
-  '    const v = document.querySelector("video");',
-  '    const vr = v ? v.getBoundingClientRect() : null;',
-  '    const minLeft = vr && vr.width > 100 ? vr.right - 40 : innerWidth * 0.5;',
-  '    let best = null, bestDepth = 1e9;',
-  '    document.querySelectorAll("div, section, aside").forEach((el) => {',
-  '      const b = el.getBoundingClientRect();',
-  '      if (b.width < 150 || b.width > innerWidth * 0.45) return;',
-  '      if (b.height < innerHeight * 0.4) return;',
-  '      if (b.left < minLeft) return;',
-  '      if (b.right < innerWidth * 0.75) return;',
-  '      const d = depth(el);',
-  '      if (d < bestDepth) { bestDepth = d; best = el; }',
-  '    });',
-  '    return best;',
-  '  }',
-  '  // Mobile layout: the chat stacks below or over the video, so there is no',
-  '  // column to find. Locate its message field instead and walk up to the block',
-  '  // that holds it, stopping before we would swallow the whole page.',
-  '  function byComposer() {',
-  '    const fields = Array.prototype.slice.call(',
-  '      document.querySelectorAll("input, textarea, [contenteditable]"));',
-  '    const field = fields.find((f) => {',
-  '      if (f.type === "hidden" || f.type === "password") return false;',
-  '      const label = (f.getAttribute("placeholder") || "") + " " +',
-  '        (f.getAttribute("aria-label") || "") + " " + (f.name || "");',
-  '      return CHATTY.test(label);',
-  '    });',
-  '    if (!field) return null;',
-  '    const area = innerWidth * innerHeight;',
-  '    let node = field;',
-  '    while (node && node !== document.body) {',
-  '      const b = node.getBoundingClientRect();',
-  '      const frac = (b.width * b.height) / area;',
-  '      if (frac > 0.1 && frac < 0.8) return node;',
-  '      node = node.parentElement;',
-  '    }',
-  '    return null;',
-  '  }',
-  '  // Narrow tiles get Whatnot\'s mobile layout, wide ones the desktop one.',
-  '  function findColumn() {',
-  '    return innerWidth >= 700',
-  '      ? (byGeometry() || byComposer())',
-  '      : (byComposer() || byGeometry());',
-  '  }',
-  '  window.__mvChat = {',
-  '    set(hide) {',
-  '      if (hide) {',
-  '        if (st.hidden) return true;',
-  '        const el = findColumn();',
-  '        if (!el) return false;',
-  '        st.el = el; st.prev = el.style.display;',
-  '        el.style.display = "none";',
-  '        st.hidden = true;',
-  '      } else {',
-  '        if (st.el) { st.el.style.display = st.prev; }',
-  '        st.el = null; st.hidden = false;',
-  '      }',
-  '      window.dispatchEvent(new Event("resize"));',
-  '      return st.hidden;',
-  '    },',
-  '  };',
-  '  return true;',
-  '})();',
-].join('\n');
+/** Injected into every stream page; the source lives in chat-inject.js. */
+const CHAT_HOOK = window.CHAT_HOOK_SOURCE;
 
 /** Finds a link to a running stream, used to jump from a profile to its live show. */
 const FIND_LIVE = '(() => { const a = document.querySelector(\'a[href*="/live/"]\'); return a ? a.href : ""; })()';
@@ -126,6 +49,7 @@ const state = {
   cols: 'auto',
   theme: 'dark',
   favourites: [],
+  chatSelector: null,
 };
 
 /** id -> { stream, el, webview, ready, ... } */
@@ -163,6 +87,7 @@ function save() {
     masterMuted: state.masterMuted,
     cols: state.cols,
     theme: state.theme,
+    chatSelector: state.chatSelector,
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -220,6 +145,7 @@ function load() {
     state.masterMuted = Boolean(data.masterMuted);
     state.cols = ['auto', '1', '2', '3', '4'].includes(data.cols) ? data.cols : 'auto';
     state.theme = data.theme === 'light' ? 'light' : 'dark';
+    state.chatSelector = typeof data.chatSelector === 'string' ? data.chatSelector : null;
   } catch (e) {
     console.warn('Stored state is unreadable', e);
   }
@@ -233,6 +159,18 @@ let idCounter = 0;
 function nextId() {
   idCounter += 1;
   return 's' + Date.now().toString(36) + idCounter;
+}
+
+const CHAT_HINT = 'Show / hide the chat  ·  Shift-click to pick it manually';
+
+/** Brief visual feedback on a button, then back to its normal tooltip. */
+function flash(button, className, message) {
+  button.classList.add(className);
+  button.title = message;
+  setTimeout(() => {
+    button.classList.remove(className);
+    button.title = CHAT_HINT;
+  }, 1800);
 }
 
 function clamp(value, min, max, fallback) {
@@ -312,6 +250,40 @@ async function setChatHidden(entry, hide) {
     return Boolean(result);
   } catch (e) {
     return false;
+  }
+}
+
+/**
+ * Lets the user point at the chat when automatic detection fails. The choice is
+ * a positional path, stored once and reused by every tile.
+ */
+async function pickChat(entry) {
+  try {
+    await entry.webview.executeJavaScript('window.__mvChat && window.__mvChat.pick()', true);
+  } catch (e) {
+    return null;
+  }
+  const deadline = Date.now() + 45000;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    let result = null;
+    try {
+      result = await entry.webview.executeJavaScript(
+        'window.__mvChat ? window.__mvChat.pickResult : ""', true);
+    } catch (e) {
+      return null;
+    }
+    if (result !== null && result !== undefined) return result;
+  }
+  return null;
+}
+
+/** Structural dump for bug reports - carries layout, never message content. */
+async function describeChat(entry) {
+  try {
+    return await entry.webview.executeJavaScript('window.__mvChat.describe()', true);
+  } catch (e) {
+    return '';
   }
 }
 
@@ -437,7 +409,7 @@ function buildTile(stream) {
   const chatBtn = document.createElement('button');
   chatBtn.className = 'tile-btn';
   chatBtn.textContent = '💬';
-  chatBtn.title = 'Show / hide the chat column';
+  chatBtn.title = CHAT_HINT;
 
   const soloBtn = document.createElement('button');
   soloBtn.className = 'tile-btn';
@@ -548,14 +520,35 @@ function buildTile(stream) {
 
   favBtn.addEventListener('click', () => toggleFavourite(entry));
 
-  chatBtn.addEventListener('click', async () => {
+  chatBtn.addEventListener('click', async (event) => {
+    // Alt: copy a structural dump. Shift: point at the chat by hand.
+    if (event.altKey) {
+      const report = await describeChat(entry);
+      if (report) {
+        await navigator.clipboard.writeText(report);
+        flash(chatBtn, 'on', 'Layout report copied to clipboard');
+      }
+      return;
+    }
+
+    if (event.shiftKey) {
+      const selector = await pickChat(entry);
+      if (!selector) return;
+      state.chatSelector = selector;
+      save();
+      await entry.webview.executeJavaScript(
+        'window.__mvChat.useSelector(' + JSON.stringify(selector) + ')', true);
+      stream.chatHidden = await setChatHidden(entry, true);
+      syncControls();
+      save();
+      return;
+    }
+
     const want = !stream.chatHidden;
     const applied = await setChatHidden(entry, want);
     if (want && !applied) {
-      // The heuristic found no chat column - say so instead of silently failing.
-      chatBtn.title = 'No chat column found on this page';
-      chatBtn.classList.add('miss');
-      setTimeout(() => { chatBtn.classList.remove('miss'); }, 1200);
+      // Say so instead of failing silently, and point at the manual way out.
+      flash(chatBtn, 'miss', 'Nothing found - shift-click to pick the chat yourself');
       return;
     }
     stream.chatHidden = applied;
@@ -582,6 +575,8 @@ function buildTile(stream) {
 
     // The page is new after every navigation, so the chat state has to be redone.
     webview.executeJavaScript(CHAT_HOOK, true)
+      .then(() => webview.executeJavaScript(
+        'window.__mvChat.useSelector(' + JSON.stringify(state.chatSelector) + ')', true))
       .then(() => (stream.chatHidden ? setChatHidden(entry, true) : null))
       .catch(() => { /* injection blocked */ });
   });

@@ -64,15 +64,22 @@ and bandwidth become the limit on most machines.
 
 ## The chat toggle does nothing
 
-The 💬 button flashes red when it finds nothing to hide. It identifies the chat by
-the shape of the page rather than by class name, using one strategy for the
-desktop layout (a column right of the video) and another for the mobile layout a
-narrow tile gets (the block around the chat's message field).
+The 💬 button flashes red when it finds nothing to hide.
+
+**The direct fix: shift-click 💬**, then click the chat in the tile. That pick is
+remembered for every tile and across restarts, so you only do it once. See
+[Audio](audio.md#when-automatic-detection-fails).
+
+Before that, check the obvious:
 
 - On a listing or profile page there is no chat to hide. Open a stream first.
 - Give the stream a moment to finish loading, then try again.
-- If it works in [focus mode](layout.md#focus-mode) but not in a small tile, the
-  mobile strategy has missed — please report it with the tile width.
+
+To help fix the automatic detection, **alt-click 💬**. That copies a structural
+report — viewport size, which strategies matched, the shape of the page's
+scrollable containers and input fields — with no chat messages or account details
+in it. Paste it into an
+[issue](https://github.com/clemensgoering/whatnot-multiview/issues).
 - If the page has a chat but the button never finds it, Whatnot has probably
   changed its layout; please
   [open an issue](https://github.com/clemensgoering/whatnot-multiview/issues).

@@ -39,15 +39,32 @@ get them back.
 bring the chat back, and the choice is remembered per tile across restarts.
 
 There is no official way to do this, so the app does not rely on class names —
-Whatnot renames those without notice. It looks for the shape of the page instead,
-with two strategies depending on how wide the tile is:
+Whatnot renames those without notice. It looks for the shape of the page instead
+and tries three things in turn:
 
-- **Wide tiles** get Whatnot's desktop layout, where the chat is a tall, narrow
-  column to the right of the video. That column is found by geometry.
-- **Narrow tiles** get the mobile layout, where the chat stacks below or over the
-  video and there is no column at all. Here the app looks for the chat's message
-  field and walks up to the block containing it, stopping before it would swallow
-  the whole page.
+1. **A column right of the video.** Whatnot's desktop layout, which a wide tile
+   or [focus mode](layout.md#focus-mode) gets.
+2. **A scrollable list of many short items.** That is what a chat is, in any
+   layout, and it needs no labels or class names at all.
+3. **A message field** whose placeholder or ARIA label mentions chat, message or
+   Nachricht, grown upwards to the block containing it.
+
+### When automatic detection fails
+
+**Shift-click 💬** and the tile enters picking mode: move the mouse until the
+chat is outlined, then click it. Press <kbd>Esc</kbd> to cancel.
+
+The choice is remembered for **all** tiles and across restarts, because every
+Whatnot stream page has the same structure. If Whatnot rebuilds its layout and
+the pick stops resolving, the automatic strategies take over again — and you can
+simply pick once more.
+
+**Alt-click 💬** copies a short structural report to your clipboard: viewport
+size, which strategies matched, and the shape of the scrollable containers and
+input fields on the page. It contains no chat messages and no account details.
+Paste it into a
+[bug report](https://github.com/clemensgoering/whatnot-multiview/issues) if the
+detection misses.
 
 If it cannot find a column, the button flashes red and nothing is hidden — see
 [Troubleshooting](troubleshooting.md#the-chat-toggle-does-nothing).

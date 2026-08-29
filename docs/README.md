@@ -17,6 +17,7 @@ Watch several Whatnot livestreams side by side, each with its own volume.
 | If you want to… | Go to |
 | --- | --- |
 | Install the app without touching a terminal | [Installation](installation.md) |
+| Get past the "unknown app" warning on first launch | [Installation → Security warning](installation.md#about-the-security-warning) |
 | Run it from source | [Installation → From source](installation.md#from-source) |
 | Add your first streams and sign in | [First steps](getting-started.md) |
 | Understand solo, mute and the master level | [Audio](audio.md) |

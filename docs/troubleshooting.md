@@ -4,6 +4,27 @@
 
 ---
 
+## Windows blocked the installer
+
+**Symptom:** *"Windows protected your PC — Microsoft Defender SmartScreen
+prevented an unrecognised app from starting."*
+
+Expected, and not a sign that anything is wrong with the file. The builds carry
+no code signature, so SmartScreen cannot tell who published them. It is reporting
+that it does not know, not that it found something bad.
+
+The dialog shows only a **Don't run** button. The one you want is hidden: click
+**More info**, and **Run anyway** appears beside it.
+
+On macOS the equivalent is *"cannot be opened because the developer cannot be
+verified"* — right-click the app and choose **Open**.
+
+To convince yourself the download is intact, check it against the
+[published checksums](installation.md#verifying-a-download). To remove the
+warning outright you would need a signing certificate; the
+[options are listed here](installation.md#removing-the-warning-properly), and
+building from source avoids it entirely.
+
 ## Google sign-in is blocked
 
 **Symptom:** *"Couldn't sign you in — this browser or app may not be secure."*

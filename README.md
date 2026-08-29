@@ -31,9 +31,14 @@ silence the rest — without pausing any of them.
 
 **[Download the installer](https://github.com/clemensgoering/whatnot-multiview/releases)** for Windows, macOS or Linux. No Node.js, no terminal.
 
-The builds are not code-signed, so Windows SmartScreen shows a warning on first
-launch — see [Installation](docs/installation.md#about-the-security-warning) for
-what to click, and for building from source if you would rather not.
+The builds are not code-signed, so the first launch triggers a warning. On
+Windows the dialog shows only a **Don't run** button — click **More info** and
+**Run anyway** appears next to it. On macOS, right-click the app and choose
+**Open**.
+
+Releases after v1.0.0 include a `SHA256SUMS.txt` so you can verify a download.
+[Installation](docs/installation.md#about-the-security-warning) covers both, and
+building from source if you would rather not click past a warning at all.
 
 <details>
 <summary>Run from source instead</summary>
@@ -114,6 +119,7 @@ embedded views. Use email and password, or Apple or Facebook. Details in
 | `launch.js` | Dev launcher with a cleaned environment |
 | `reset-session.js` | Deletes the stored session from the command line |
 | `tools/make-assets.js` | Regenerates the screenshots and app icon |
+| `tools/check-links.js` | Verifies every relative link and anchor in the docs |
 | `docs/` | The guide |
 
 Tiles are reconciled rather than re-rendered: existing `<webview>` elements are

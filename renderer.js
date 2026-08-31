@@ -85,6 +85,8 @@ const dom = {
   signOut: document.getElementById('sign-out'),
   favToggle: document.getElementById('fav-toggle'),
   favPanel: document.getElementById('fav-panel'),
+  updateBtn: document.getElementById('update-btn'),
+  versionBtn: document.getElementById('version-btn'),
 };
 
 /* ------------------------------------------------------------------ */
@@ -837,6 +839,59 @@ function soloByIndex(index) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Updates                                                             */
+/* ------------------------------------------------------------------ */
+
+/*
+ * The button is hidden unless there is something to say. An update indicator
+ * that is always visible is an indicator nobody reads, and this toolbar is
+ * already busy.
+ */
+function renderUpdate(update) {
+  const btn = dom.updateBtn;
+  if (!btn || !update) return;
+
+  const show = (label, title, primary) => {
+    btn.hidden = false;
+    btn.textContent = label;
+    btn.title = title;
+    btn.classList.toggle('primary', Boolean(primary));
+  };
+
+  switch (update.status) {
+    case 'available':
+      show('Update ' + update.version, 'Download version ' + update.version, true);
+      break;
+    case 'available-manual':
+      show('Update ' + update.version, 'Open the release page — macOS builds are unsigned and cannot self-update', true);
+      break;
+    case 'downloading':
+      show('Downloading ' + update.percent + '%', 'Downloading the update', false);
+      break;
+    case 'ready':
+      show('Restart to update', 'Version ' + update.version + ' is ready — restart to install', true);
+      break;
+    case 'error':
+      show('Update failed', update.error || 'Update check failed', false);
+      break;
+    default:
+      // idle, checking, current, dev: nothing worth a button.
+      btn.hidden = true;
+  }
+}
+
+async function onUpdateClick() {
+  const update = await window.app.updateState();
+  if (update.status === 'available' || update.status === 'available-manual') {
+    await window.app.updateDownload();
+  } else if (update.status === 'ready') {
+    await window.app.updateInstall();
+  } else if (update.status === 'error') {
+    await window.app.updateCheck();
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Global controls                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -928,6 +983,25 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
   }
 });
+
+if (dom.updateBtn) {
+  dom.updateBtn.addEventListener('click', onUpdateClick);
+  window.app.onUpdateState(renderUpdate);
+  window.app.updateState().then(renderUpdate);
+}
+
+if (dom.versionBtn) {
+  window.app.appVersion().then((v) => { dom.versionBtn.textContent = 'v' + v; });
+  dom.versionBtn.addEventListener('click', async () => {
+    const before = dom.versionBtn.textContent;
+    dom.versionBtn.textContent = 'checking…';
+    const update = await window.app.updateCheck();
+    dom.versionBtn.textContent = before;
+    // 'current' and 'dev' leave the update button hidden, so say something here.
+    if (update.status === 'current') flash(dom.versionBtn, 'on', 'You are on the latest version');
+    else if (update.status === 'dev') flash(dom.versionBtn, 'on', 'Updates only work in an installed build');
+  });
+}
 
 load();
 loadFavourites();

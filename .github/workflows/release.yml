@@ -39,13 +39,18 @@ jobs:
       # Icons live in build/ and are committed, so no display server is needed.
       - run: npm run ${{ matrix.script }}
 
+      # latest*.yml is the manifest the in-app updater reads. Without it on the
+      # release, checking for updates finds nothing at all.
       - uses: actions/upload-artifact@v4
         with:
           name: installer-${{ matrix.os }}
           path: |
             dist/*.exe
             dist/*.dmg
+            dist/*.zip
             dist/*.AppImage
+            dist/*.blockmap
+            dist/latest*.yml
           if-no-files-found: warn
 
   release:

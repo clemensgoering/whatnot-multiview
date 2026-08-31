@@ -338,3 +338,14 @@ kbd {
 }
 
 .tile-btn.miss { color: var(--live); }
+
+/* ---------- Update indicator ---------- */
+.update-wrap { display: flex; }
+#update-btn { white-space: nowrap; }
+#update-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+
+.linky {
+  border: 0; background: transparent; color: var(--text-dim);
+  font: inherit; cursor: pointer; padding: 0 4px; border-radius: 4px;
+}
+.linky:hover { color: var(--text); background: var(--bg-tile); }

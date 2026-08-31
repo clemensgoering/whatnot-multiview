@@ -69,6 +69,7 @@ Electron start as plain Node and the window never appears.
 | **Favourites** | Save any page a tile is showing and reopen it in one click |
 | **Real navigation** | Back and home buttons per tile, so a tile is never a dead end |
 | **One login** | All tiles share a session; it survives restarts |
+| **In-app updates** | Checks GitHub releases and installs on request — Windows and Linux |
 
 Everything — stream list, volumes, layout, theme — is remembered between sessions.
 
@@ -117,6 +118,7 @@ embedded views. Use email and password, or Apple or Facebook. Details in
 | `chat-inject.js` | Source of the script injected into stream pages to hide the chat |
 | `index.html` · `styles.css` | Interface and colour tokens |
 | `launch.js` | Dev launcher with a cleaned environment |
+| `updater.js` | Update checks against the GitHub releases |
 | `reset-session.js` | Deletes the stored session from the command line |
 | `tools/make-assets.js` | Regenerates the screenshots and app icon |
 | `tools/check-links.js` | Verifies every relative link and anchor in the docs |

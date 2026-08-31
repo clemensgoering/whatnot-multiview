@@ -64,6 +64,28 @@ which is far cheaper and works with electron-builder.
 If none of that appeals — a reasonable position — build from source instead. You
 then run code you compiled yourself, and no warning appears.
 
+## Updating
+
+The app checks the GitHub releases a few seconds after launch. When a newer
+version exists, an **Update** button appears in the toolbar:
+
+1. Click it to download the update in the background — progress shows on the button.
+2. When it says **Restart to update**, click again. The installer runs and the
+   app comes back up on the new version.
+
+Nothing downloads or installs without you asking. This app is used while bidding
+on live auctions, and a surprise restart there is expensive.
+
+The version number sits in the status bar at the bottom right; clicking it checks
+for updates on demand.
+
+### macOS updates are manual
+
+Squirrel, the framework behind Electron's updater, refuses to install an update
+whose app bundle is not code-signed — and these builds are not signed. On macOS
+the button therefore opens the releases page instead of installing, and you
+replace the app yourself. Windows and Linux install unsigned updates normally.
+
 ## From source
 
 Requires [Node.js](https://nodejs.org/) 18 or newer.

@@ -128,6 +128,18 @@ Either way, please
 the report. `npm run audio-check` verifies the app's own audio path against a
 controlled page, which separates an app fault from a site change.
 
+## The update button says "Update failed"
+
+Click it again — it retries the check and shows the reason as its tooltip.
+
+The most likely cause is that your installed version predates the updater:
+releases up to v1.0.0 carry no `latest.yml`, the manifest the updater reads, so
+there is nothing for it to compare against. Download the current release once by
+hand and updating works from then on.
+
+A background check that fails stays silent by design, so a button appearing at
+all means you asked for the check yourself.
+
 ## Where is my data stored?
 
 Two places, both local:

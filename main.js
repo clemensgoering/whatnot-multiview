@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog, shell, ipcMain, session } = require('electron');
 const path = require('path');
+const updater = require('./updater');
 
 // Streams should start without a click, otherwise every tile needs tapping first.
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -28,6 +29,10 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
   mainWindow.on('closed', () => { mainWindow = null; });
+
+  updater.attach((channel, payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
+  });
 }
 
 /*
@@ -45,6 +50,9 @@ function configureStreamSession() {
 app.whenReady().then(() => {
   configureStreamSession();
   createWindow();
+
+  // One quiet check a few seconds in, so it never competes with the first paint.
+  setTimeout(() => { updater.check(); }, 8000);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -87,6 +95,12 @@ app.on('web-contents-created', (_event, contents) => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+ipcMain.handle('app-version', () => app.getVersion());
+ipcMain.handle('update-check', () => updater.check(true));
+ipcMain.handle('update-download', () => updater.download());
+ipcMain.handle('update-install', () => updater.install());
+ipcMain.handle('update-state', () => updater.getState());
 
 ipcMain.handle('open-external', (_event, url) => {
   if (typeof url === 'string' && /^https?:/.test(url)) return shell.openExternal(url);

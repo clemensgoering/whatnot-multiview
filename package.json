@@ -1,6 +1,6 @@
 {
   "name": "whatnot-multiview",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Watch several Whatnot livestreams side by side, with a dark UI and per-stream volume control",
   "main": "main.js",
   "scripts": {
@@ -48,6 +48,7 @@
     },
     "files": [
       "main.js",
+      "updater.js",
       "preload.js",
       "renderer.js",
       "chat-inject.js",
@@ -64,7 +65,8 @@
           ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "verifyUpdateCodeSignature": false
     },
     "nsis": {
       "oneClick": false,
@@ -102,6 +104,16 @@
       "icon": "build/icon.png",
       "category": "AudioVideo",
       "artifactName": "WhatnotMultiView-${version}.${ext}"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "clemensgoering",
+        "repo": "whatnot-multiview"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

@@ -44,7 +44,10 @@ function createWindow() {
  * honest identity, and it tripped both Google sign-in and Whatnot's fraud check.
  */
 function configureStreamSession() {
-  session.fromPartition('persist:whatnot');
+  const streamSession = session.fromPartition('persist:whatnot');
+  // Injects the volume hook at document-start; see webview-preload.js for why
+  // the level cannot be taken from the media elements on these pages.
+  streamSession.setPreloads([path.join(__dirname, 'webview-preload.js')]);
 }
 
 app.whenReady().then(() => {
@@ -94,6 +97,19 @@ app.on('web-contents-created', (_event, contents) => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+const AUTH_COOKIES = ['__Secure-claims', '__Secure-urs', 'usid', 'cas_session'];
+
+ipcMain.handle('whatnot-signed-in', async () => {
+  try {
+    const jar = session.fromPartition('persist:whatnot').cookies;
+    const found = await jar.get({ domain: '.whatnot.com' });
+    const names = new Set(found.map((c) => c.name));
+    return AUTH_COOKIES.some((name) => names.has(name));
+  } catch (e) {
+    return false;
+  }
 });
 
 ipcMain.handle('app-version', () => app.getVersion());

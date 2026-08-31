@@ -643,6 +643,7 @@ function buildTile(stream) {
     el.classList.remove('has-error');
     entry.currentUrl = event.url || entry.currentUrl;
     syncControls();
+    refreshSignedIn();
   });
 
   webview.addEventListener('did-navigate-in-page', (event) => {
@@ -838,6 +839,20 @@ function soloByIndex(index) {
   applyAllAudio();
 }
 
+/**
+ * Hides the Log in button while a Whatnot session exists. Offering a login to
+ * someone who is signed in reads as "you are not signed in", which is exactly
+ * the wrong thing for a toolbar to say.
+ */
+async function refreshSignedIn() {
+  if (!dom.openLogin || !window.app.signedIn) return;
+  try {
+    dom.openLogin.hidden = await window.app.signedIn();
+  } catch (e) {
+    dom.openLogin.hidden = false;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Updates                                                             */
 /* ------------------------------------------------------------------ */
@@ -948,6 +963,7 @@ dom.openLoginEmpty.addEventListener('click', () => addStream(WHATNOT_LOGIN));
 dom.signOut.addEventListener('click', async () => {
   const cleared = await window.app.resetSession();
   if (!cleared) return;
+  refreshSignedIn();
   // Every tile still shows the signed-in page until it is reloaded.
   tiles.forEach((entry) => entry.webview.reload());
 });
@@ -1002,6 +1018,8 @@ if (dom.versionBtn) {
     else if (update.status === 'dev') flash(dom.versionBtn, 'on', 'Updates only work in an installed build');
   });
 }
+
+refreshSignedIn();
 
 load();
 loadFavourites();

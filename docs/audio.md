@@ -108,13 +108,26 @@ releases the solo. Otherwise the click would appear to do nothing.
 
 ## What happens under the hood
 
-Volume is applied by setting `volume` on the `<video>` elements inside the page,
-re-applied by a short interval and a `MutationObserver` because Whatnot rebuilds
-its player on reconnect.
+Volume is set on the page's media elements — but finding them is the hard part.
 
-Muting does not rely on that. It is applied at the webview level with
-`setAudioMuted()`, so even if Whatnot changed its player entirely, muting and solo
-would keep working — only the fine-grained levels would be affected.
+Whatnot plays over WebRTC, and the `<video>` you can see is **muted**: it carries
+the picture only. The sound comes from an `<audio>` element the player creates
+and never appends to the document, so `querySelectorAll` cannot see it. An
+earlier version looked only at elements in the DOM, which is exactly why the
+sliders did nothing while mute and solo kept working.
+
+The app therefore keeps a register of every element that could become an audio
+sink: elements as they are created, elements told to `play()`, and elements
+handed a `MediaStream`. The level is applied to all of them, re-applied on a
+short interval because the player is rebuilt on reconnect. Elements the page
+muted deliberately are never unmuted — doing so would play the stream twice.
+
+For pages that route sound through the Web Audio API instead, anything
+connecting to a context's destination is passed through a gain node the app
+owns. Whatnot does not currently do this; it costs nothing when unused.
+
+Muting does not depend on any of that. It is applied at the webview level with
+`setAudioMuted()`, which is why it kept working throughout.
 
 ---
 

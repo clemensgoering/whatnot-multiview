@@ -1,6 +1,6 @@
 {
   "name": "whatnot-multiview",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Watch several Whatnot livestreams side by side, with a dark UI and per-stream volume control",
   "main": "main.js",
   "scripts": {
@@ -50,6 +50,7 @@
       "main.js",
       "updater.js",
       "preload.js",
+      "webview-preload.js",
       "renderer.js",
       "chat-inject.js",
       "index.html",

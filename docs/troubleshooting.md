@@ -115,13 +115,17 @@ report to your clipboard: whether the webview is muted at Electron level, whethe
 it is currently producing sound, and what media elements the page actually has —
 their volume, muted and paused state. No account details, no page content.
 
-The report distinguishes the two possible faults, which need different fixes:
+The useful pair of numbers is `mediaCount` against `registered`:
 
-- **`mediaCount` is 0 while `audible` is true.** The page is producing sound
-  without an ordinary `<video>` or `<audio>` element — through the Web Audio API,
-  for instance — and setting element volume cannot reach it.
-- **The elements are there and carry the volume we asked for, but nothing
-  changes.** Then the level is being applied somewhere further along.
+- **`mediaCount` counts elements in the document.** On a Whatnot stream this is
+  1 — the muted `<video>` carrying the picture.
+- **`registered` counts every element that could be an audio sink**, including
+  the ones the player creates without appending. On a stream this is typically 4,
+  and the one marked `PLAYING` and not muted is where the sound comes from.
+
+If `registered` is 1 on a live stream, the hook did not install early enough —
+reload the tile. If the volumes in the report match what you asked for and the
+sound is still unchanged, the level is being applied somewhere further along.
 
 Either way, please
 [open an issue](https://github.com/clemensgoering/whatnot-multiview/issues) with

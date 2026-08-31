@@ -116,6 +116,7 @@ embedded views. Use email and password, or Apple or Facebook. Details in
 | `preload.js` | Narrow bridge to the renderer |
 | `renderer.js` | State, tiles, audio logic, layout |
 | `chat-inject.js` | Source of the script injected into stream pages to hide the chat |
+| `webview-preload.js` | Installs the volume hook in the page before its own scripts run |
 | `index.html` · `styles.css` | Interface and colour tokens |
 | `launch.js` | Dev launcher with a cleaned environment |
 | `updater.js` | Update checks against the GitHub releases |
@@ -143,8 +144,9 @@ third-party content or account details land in the repository — and writes
 - A Whatnot login is required, via email and password rather than Google.
 - Many parallel video streams cost CPU and bandwidth. Beyond roughly six at once
   it pays to close tiles you are not watching.
-- Volume control depends on Whatnot's player using standard `<video>` elements.
-  Should that change, muting and solo still work at the webview level; only the
+- Volume reaches the player by tracking every media element it creates, including
+  the detached `<audio>` element WebRTC playback actually uses. Should Whatnot
+  change that again, muting and solo still work at the webview level; only the
   fine-grained levels would be affected.
 
 ## Contributing

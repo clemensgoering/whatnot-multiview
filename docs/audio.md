@@ -19,7 +19,7 @@ From left to right:
 | --- | --- |
 | ‹ | Back, within this tile's history |
 | ⌂ | Whatnot home page **in a new tile** — see [Navigation](getting-started.md#navigating-inside-a-tile) |
-| 🔊 / 🔇 | Mute or unmute this tile |
+| 🔊 / 🔇 | Mute or unmute this tile — alt-click for an [audio report](troubleshooting.md#the-audio-controls-do-nothing) |
 | Slider | This tile's own volume, 0–100 (85 in the shot above) |
 | ★ | Save the page this tile is showing to [favourites](getting-started.md#favourites) |
 | 💬 | Show or hide the chat column |

@@ -120,6 +120,7 @@ embedded views. Use email and password, or Apple or Facebook. Details in
 | `reset-session.js` | Deletes the stored session from the command line |
 | `tools/make-assets.js` | Regenerates the screenshots and app icon |
 | `tools/check-links.js` | Verifies every relative link and anchor in the docs |
+| `tools/audio-check.js` | Checks the audio path against a controlled page |
 | `docs/` | The guide |
 
 Tiles are reconciled rather than re-rendered: existing `<webview>` elements are

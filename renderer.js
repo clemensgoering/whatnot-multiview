@@ -23,7 +23,21 @@ const AUDIO_HOOK = [
   '    });',
   '  };',
   '  window.__mvAudio = {',
-  '    set(v) { state.vol = Math.max(0, Math.min(1, v)); apply(); },',
+  '    set(v) { state.vol = Math.max(0, Math.min(1, v)); apply(); return state.vol; },',
+  '    get() { return state.vol; },',
+  '    describe() {',
+  '      const media = [];',
+  '      document.querySelectorAll("video, audio").forEach((el) => {',
+  '        media.push({ tag: el.tagName.toLowerCase(), volume: Math.round(el.volume * 100) / 100,',
+  '          muted: el.muted, paused: el.paused, readyState: el.readyState,',
+  '          src: String(el.currentSrc || "").slice(0, 20) });',
+  '      });',
+  '      return JSON.stringify({ url: location.pathname.slice(0, 60), wanted: state.vol,',
+  '        mediaCount: media.length, media: media.slice(0, 6),',
+  '        iframes: document.querySelectorAll("iframe").length,',
+  '        shadowRoots: (() => { let n = 0; document.querySelectorAll("*").forEach((e) => { if (e.shadowRoot) n += 1; }); return n; })(),',
+  '        webAudio: typeof (window.AudioContext || window.webkitAudioContext) === "function" });',
+  '    },',
   '  };',
   '  setInterval(apply, 500);',
   '  new MutationObserver(apply).observe(document.documentElement, { childList: true, subtree: true });',
@@ -165,11 +179,12 @@ const CHAT_HINT = 'Show / hide the chat  ·  Shift-click to pick it manually';
 
 /** Brief visual feedback on a button, then back to its normal tooltip. */
 function flash(button, className, message) {
+  const previous = button.title;
   button.classList.add(className);
   button.title = message;
   setTimeout(() => {
     button.classList.remove(className);
-    button.title = CHAT_HINT;
+    button.title = previous;
   }, 1800);
 }
 
@@ -231,6 +246,25 @@ function applyAudio(entry) {
   } catch (e) {
     /* webview not ready yet */
   }
+}
+
+/** Structural audio report for diagnosing a page whose sound we cannot steer. */
+async function describeAudio(entry) {
+  const report = { tile: entry.stream.title, muted: entry.stream.muted, volume: entry.stream.volume };
+  try {
+    report.isAudioMuted = entry.webview.isAudioMuted();
+    report.audible = entry.webview.isCurrentlyAudible ? entry.webview.isCurrentlyAudible() : null;
+  } catch (e) {
+    report.isAudioMuted = 'unavailable';
+  }
+  try {
+    const page = await entry.webview.executeJavaScript(
+      'window.__mvAudio && window.__mvAudio.describe ? window.__mvAudio.describe() : "no hook"', true);
+    report.page = page === 'no hook' ? 'no hook' : JSON.parse(page);
+  } catch (e) {
+    report.page = 'unreachable: ' + e.message;
+  }
+  return JSON.stringify(report);
 }
 
 function applyAllAudio() {
@@ -385,7 +419,7 @@ function buildTile(stream) {
 
   const muteBtn = document.createElement('button');
   muteBtn.className = 'tile-btn';
-  muteBtn.title = 'Mute / unmute';
+  muteBtn.title = 'Mute / unmute  ·  Alt-click for an audio report';
 
   const volume = document.createElement('input');
   volume.className = 'slider';
@@ -469,7 +503,13 @@ function buildTile(stream) {
 
   /* --- Tile controls --- */
 
-  muteBtn.addEventListener('click', () => {
+  muteBtn.addEventListener('click', async (event) => {
+    if (event.altKey) {
+      const report = await describeAudio(entry);
+      await navigator.clipboard.writeText(report);
+      flash(muteBtn, 'on', 'Audio report copied to clipboard');
+      return;
+    }
     stream.muted = !stream.muted;
     // Unmuting while another tile is soloed releases the solo, otherwise
     // nothing would appear to happen.

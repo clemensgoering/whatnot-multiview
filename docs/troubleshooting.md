@@ -101,23 +101,32 @@ report — viewport size, which strategies matched, the shape of the page's
 scrollable containers and input fields — with no chat messages or account details
 in it. Paste it into an
 [issue](https://github.com/clemensgoering/whatnot-multiview/issues).
-- If the page has a chat but the button never finds it, Whatnot has probably
-  changed its layout; please
-  [open an issue](https://github.com/clemensgoering/whatnot-multiview/issues).
 
 If it hides the wrong element, press it again to restore, then reload the tile
 with ⟳.
 
-## The volume slider does not change anything
+## The audio controls do nothing
 
-Muting works at the webview level and is reliable. The slider works by setting
-`volume` on the page's `<video>` elements, which depends on Whatnot using standard
-media elements. If Whatnot changes its player, mute and solo keep working while
-the fine-grained levels may not.
+Reload the tile with **⟳** first — the volume hook is installed on every page
+load, so a tile that loaded oddly recovers with a reload.
 
-Reload the tile with **⟳** first — the injection runs on every page load. If it
-stays broken, please
-[open an issue](https://github.com/clemensgoering/whatnot-multiview/issues).
+If it stays broken, **alt-click the tile's 🔊 button**. That copies an audio
+report to your clipboard: whether the webview is muted at Electron level, whether
+it is currently producing sound, and what media elements the page actually has —
+their volume, muted and paused state. No account details, no page content.
+
+The report distinguishes the two possible faults, which need different fixes:
+
+- **`mediaCount` is 0 while `audible` is true.** The page is producing sound
+  without an ordinary `<video>` or `<audio>` element — through the Web Audio API,
+  for instance — and setting element volume cannot reach it.
+- **The elements are there and carry the volume we asked for, but nothing
+  changes.** Then the level is being applied somewhere further along.
+
+Either way, please
+[open an issue](https://github.com/clemensgoering/whatnot-multiview/issues) with
+the report. `npm run audio-check` verifies the app's own audio path against a
+controlled page, which separates an app fault from a site change.
 
 ## Where is my data stored?
 
